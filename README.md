@@ -51,10 +51,4 @@ Coming soon.
 
 ## 📬 Contact
 
-For questions or collaboration, feel free to reach out via GitHub Issues or Email.
-
----
-
-<p align="center">
-  <img src="./static/images/favicon.svg" alt="MTVCrafter Logo" width="40">
-</p>
+For questions or collaboration, feel free to reach out via GitHub Issues.
