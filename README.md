@@ -15,7 +15,7 @@ MTVCrafter achieves **state-of-the-art results with an FID-VID of 6.98**, outper
 
 ## 🎯 Motivation
 
-<img src="./static/images/motivation.png" alt="Motivation" width="90%">
+![Motivation](./static/images/motivation.png)
 
 ## 🎞️ Animation Results
 
