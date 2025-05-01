@@ -1,6 +1,6 @@
 # MTVCrafter: 4D Motion Tokenization for General Human Image Animation
 
-> Official project page of **MTVCrafter**, a novel framework for general and high-quality human image animation using raw 3D motion.
+> Official project page of **MTVCrafter**, a novel framework for general and high-quality human image animation using raw 3D motion sequences.
 
 ## 🔍 Abstract
 
@@ -15,7 +15,7 @@ MTVCrafter achieves **state-of-the-art results with an FID-VID of 6.98**, outper
 
 ## 🎯 Motivation
 
-<img src="./static/images/motivation.png" alt="Motivation" width="100%">
+<img src="./static/images/motivation.png" alt="Motivation" width="90%">
 
 ## 🎞️ Animation Results
 
