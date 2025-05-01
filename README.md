@@ -19,43 +19,55 @@ MTVCrafter achieves **state-of-the-art results with an FID-VID of 6.98**, outper
 
 ## 🎞️ Animation Results
 
-> All videos below autoplay and loop automatically. You may hover or click to replay if your browser blocks autoplay.
+## Animation
 
-### Luffy
-<video src="./static/videos/luffy.mp4" autoplay loop muted playsinline width="320"></video>
+### Luffy Animation
 
-### Mona Lisa
-<video src="./static/videos/monalisa.mp4" autoplay loop muted playsinline width="320"></video>
+![Luffy Animation](./static/gifs/luffy.gif)
 
-### Siren
-<video src="./static/videos/siren.mp4" autoplay loop muted playsinline width="320"></video>
+### Mona Lisa Animation
 
-### Tanjiro
-<video src="./static/videos/tanjianci.mp4" autoplay loop muted playsinline width="320"></video>
+![Mona Lisa Animation](./static/gifs/monalisa.gif)
 
-### Pixel Style
-<video src="./static/videos/xiangsu_new.mp4" autoplay loop muted playsinline width="320"></video>
+### Siren Animation
 
-### Daji
-<video src="./static/videos/daji.mp4" autoplay loop muted playsinline width="320"></video>
+![Siren Animation](./static/gifs/siren.gif)
 
-### Spiderman
-<video src="./static/videos/spider.mp4" autoplay loop muted playsinline width="320"></video>
+### Tanjianci Animation
 
-### Ghibli Style
-<video src="./static/videos/jibuli.mp4" autoplay loop muted playsinline width="320"></video>
+![Tanjianci Animation](./static/gifs/tanjianci.gif)
 
-### Cowboy
-<video src="./static/videos/niuzai.mp4" autoplay loop muted playsinline width="320"></video>
+### Xiangsu New Animation
 
-### Human
-<video src="./static/videos/human.mp4" autoplay loop muted playsinline width="320"></video>
+![Xiangsu New Animation](./static/gifs/xiangsu_new.gif)
 
-### Ultraman
-<video src="./static/videos/dijia.mp4" autoplay loop muted playsinline width="320"></video>
+### Daji Animation
 
-### Iron Man
-<video src="./static/videos/iron-man.mp4" autoplay loop muted playsinline width="320"></video>
+![Daji Animation](./static/gifs/daji.gif)
+
+### Spider Animation
+
+![Spider Animation](./static/gifs/spider.gif)
+
+### Jibuli Animation
+
+![Jibuli Animation](./static/gifs/jibuli.gif)
+
+### Niuzai Animation
+
+![Niuzai Animation](./static/gifs/niuzai.gif)
+
+### Human Animation
+
+![Human Animation](./static/gifs/human.gif)
+
+### Dijia Animation
+
+![Dijia Animation](./static/gifs/dijia.gif)
+
+### Iron Man Animation
+
+![Iron Man Animation](./static/gifs/iron-man.gif)
 
 ---
 
