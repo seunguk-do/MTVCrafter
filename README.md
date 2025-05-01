@@ -19,55 +19,29 @@ MTVCrafter achieves **state-of-the-art results with an FID-VID of 6.98**, outper
 
 ## 🎞️ Animation Results
 
-## Animation
+![Luffy Animation](./static/videos/luffy.gif)
 
-### Luffy Animation
+![Mona Lisa Animation](./static/videos/monalisa.gif)
 
-![Luffy Animation](./static/gifs/luffy.gif)
+![Siren Animation](./static/videos/siren.gif)
 
-### Mona Lisa Animation
+![Tanjianci Animation](./static/videos/tanjianci.gif)
 
-![Mona Lisa Animation](./static/gifs/monalisa.gif)
+![Xiangsu New Animation](./static/videos/xiangsu_new.gif)
 
-### Siren Animation
+![Daji Animation](./static/videos/daji.gif)
 
-![Siren Animation](./static/gifs/siren.gif)
+![Spider Animation](./static/videos/spider.gif)
 
-### Tanjianci Animation
+![Jibuli Animation](./static/videos/jibuli.gif)
 
-![Tanjianci Animation](./static/gifs/tanjianci.gif)
+![Niuzai Animation](./static/videos/niuzai.gif)
 
-### Xiangsu New Animation
+![Human Animation](./static/videos/human.gif)
 
-![Xiangsu New Animation](./static/gifs/xiangsu_new.gif)
+![Dijia Animation](./static/videos/dijia.gif)
 
-### Daji Animation
-
-![Daji Animation](./static/gifs/daji.gif)
-
-### Spider Animation
-
-![Spider Animation](./static/gifs/spider.gif)
-
-### Jibuli Animation
-
-![Jibuli Animation](./static/gifs/jibuli.gif)
-
-### Niuzai Animation
-
-![Niuzai Animation](./static/gifs/niuzai.gif)
-
-### Human Animation
-
-![Human Animation](./static/gifs/human.gif)
-
-### Dijia Animation
-
-![Dijia Animation](./static/gifs/dijia.gif)
-
-### Iron Man Animation
-
-![Iron Man Animation](./static/gifs/iron-man.gif)
+![Iron Man Animation](./static/videos/iron-man.gif)
 
 ---
 
