@@ -33,7 +33,7 @@ MTVCrafter achieves **state-of-the-art results with an FID-VID of 6.98**, outper
 
 ![Spider Animation](./static/videos/spider.gif)
 
-![Jibuli Animation](./static/videos/jibuli.gif)
+![Jibuli Animation](./static/videos/output.gif)
 
 ![Niuzai Animation](./static/videos/niuzai.gif)
 
