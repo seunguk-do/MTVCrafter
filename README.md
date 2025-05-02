@@ -15,7 +15,32 @@ MTVCrafter achieves **state-of-the-art results with an FID-VID of 6.98**, outper
 
 ## 🎯 Motivation
 
-![Motivation](./static/images/motivation.png)
+![Motivation](./static/images/Motivation.png)
+
+Our motivation is that directly tokenizing 4D motion captures richer and more expressive information than traditional pose-rendered images derived from the driven video.
+
+## 💡 Method
+
+Our MTVCrafter comprises a **4D motion tokenizer (4DMoT)** and a **motion-aware video diffusion transformer (MV-DiT)**.
+The 4DMoT encodes raw 4D motion into compact and expressive motion tokens,
+while the MV-DiT integrates these tokens into a powerful video DiT backbone via 4D motion attention and 4D positional encodings.
+
+![Method](./static/images/4DMoT.png)
+
+(1)
+Our 4D motion tokenizer consists of an encoder-decoder framework to learn spatio-temporal latent representations of SMPL motion sequences,
+and a vector quantizer to learn discrete tokens in a unified space.
+All operations are performed in 2D space along frame and joint axes.
+
+![Method](./static/images/MV-DiT.png)
+
+(2)
+Based on video DiT architecture,
+we design a 4D motion attention module to combine motion tokens with vision tokens.
+Since the patchify disrupted positional information,
+we introduce 4D RoPE to recover the spatio-temporal relationships.
+To further improve the quality of generation and generalization,
+we use learnable unconditional tokens for motion classifier-free guidance.
 
 ## 🎞️ Animation Results
 
@@ -27,13 +52,13 @@ MTVCrafter achieves **state-of-the-art results with an FID-VID of 6.98**, outper
 
 ![Tanjianci Animation](./static/videos/tanjianci.gif)
 
-![Xiangsu New Animation](./static/videos/xiangsu_new.gif)
+![Xiangsu New Animation](./static/videos/xiangsu.gif)
 
 ![Daji Animation](./static/videos/daji.gif)
 
 ![Spider Animation](./static/videos/spider.gif)
 
-![Jibuli Animation](./static/videos/output.gif)
+![Jibuli Animation](./static/videos/jibuli.gif)
 
 ![Niuzai Animation](./static/videos/niuzai.gif)
 
