@@ -1,10 +1,10 @@
-# MTVCrafter: 4D Motion Tokenization for General Human Image Animation
+# MTVCrafter: 4D Motion Tokenization for Open-World Human Image Animation
 
 > Official project page of **MTVCrafter**, a novel framework for general and high-quality human image animation using raw 3D motion sequences.
 
 ## 🔍 Abstract
 
-Human image animation has attracted increasing attention and developed rapidly due to its broad applications in digital humans. However, existing methods rely on 2D rendered pose images for motion guidance, which limits generalization and discards essential 3D information.  
+Human image animation has attracted increasing attention and developed rapidly due to its broad applications in digital humans. However, existing methods rely on 2D-rendered pose images for motion guidance, which limits generalization and discards essential 3D information.  
 To tackle these problems, we propose **MTVCrafter (Motion Tokenization Video Crafter)**, the first framework that directly models raw 3D motion sequences for human image animation beyond intermediate 2D representations.
 
 - We introduce **4DMoT (4D motion tokenizer)** to encode raw motion data into discrete motion tokens, preserving compact but expressive spatio-temporal information.
@@ -33,7 +33,7 @@ All operations are performed in 2D space along frame and joint axes.
 *(2) MV-DiT*:
 Based on video DiT architecture,
 we design a 4D motion attention module to combine motion tokens with vision tokens.
-Since the patchify disrupted positional information,
+Since the tokenization and flattening disrupted positional information,
 we introduce 4D RoPE to recover the spatio-temporal relationships.
 To further improve the quality of generation and generalization,
 we use learnable unconditional tokens for motion classifier-free guidance.
