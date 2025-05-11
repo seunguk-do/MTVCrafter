@@ -5,9 +5,9 @@
 ## 🔍 Abstract
 
 Human image animation has attracted increasing attention and developed rapidly due to its broad applications in digital humans. However, existing methods rely on 2D-rendered pose images for motion guidance, which limits generalization and discards essential 3D information.  
-To tackle these problems, we propose **MTVCrafter (Motion Tokenization Video Crafter)**, the first framework that directly models raw 3D motion sequences for human image animation beyond intermediate 2D representations.
+To tackle these problems, we propose **MTVCrafter (Motion Tokenization Video Crafter)**, the first framework that directly models raw 3D motion sequences for open-world human image animation beyond intermediate 2D representations.
 
-- We introduce **4DMoT (4D motion tokenizer)** to encode raw motion data into discrete motion tokens, preserving compact but expressive spatio-temporal information.
+- We introduce **4DMoT (4D motion tokenizer)** to encode raw motion data into discrete motion tokens, preserving 4D compact yet expressive spatio-temporal information.
 - Then, we propose **MV-DiT (Motion-aware Video DiT)**, which integrates a motion attention module and 4D positional encodings to effectively modulate vision tokens with motion tokens.
 - The overall pipeline facilitates high-quality human video generation guided by 4D motion tokens.
 
@@ -17,7 +17,7 @@ MTVCrafter achieves **state-of-the-art results with an FID-VID of 6.98**, outper
 
 ![Motivation](./static/images/Motivation.png)
 
-Our motivation is that directly tokenizing 4D motion captures richer and more expressive information than traditional pose-rendered images derived from the driven video.
+Our motivation is that directly tokenizing 4D motion captures more faithful and expressive information than traditional 2D-rendered pose images derived from the driven video.
 
 ## 💡 Method
 
@@ -37,6 +37,10 @@ Since the tokenization and flattening disrupted positional information,
 we introduce 4D RoPE to recover the spatio-temporal relationships.
 To further improve the quality of generation and generalization,
 we use learnable unconditional tokens for motion classifier-free guidance.
+
+
+## 
+
 
 ## 🎞️ Animation
 
@@ -65,6 +69,41 @@ we use learnable unconditional tokens for motion classifier-free guidance.
 ![Iron Man Animation](./static/videos/iron-man.gif)
 
 ---
+
+## 🛠️ Installation
+
+We recommend using a clean Python environment (Python 3.10+).
+
+```bash
+clone this repository && cd MTVCrafter
+
+# Create virtual environment
+conda create -n mtvcrafter python=3.11
+conda activate mtvcrafter
+
+# Install dependencies
+pip install -r requirements.txt
+```
+
+## 🚀 Usage
+
+To animate a human image with a given 3D motion sequence,
+we first need to obtain the SMPL motion sequnce from the driven video:
+
+```bash
+python process_nlf.py "your_video_directory"
+```
+
+Then, we can use the following command to generate the video:
+
+```bash
+python infer.py --ref_image_path "ref_images/hunam.png" --motion_data_path "data/sample_data.pkl" --output_path "inference_output"
+```
+
+- `--ref_image_path`: Path to the image of reference character.
+- `--motion_data_path`: Path to the motion sequence (.pkl format).
+- `--output_path`: Where to save the generated animation results.
+
 
 ## 📄 Citation
 
