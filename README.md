@@ -88,13 +88,13 @@ pip install -r requirements.txt
 ## 🚀 Usage
 
 To animate a human image with a given 3D motion sequence,
-we first need to obtain the SMPL motion sequnce from the driven video:
+you first need to obtain the SMPL motion sequnces from the driven video:
 
 ```bash
 python process_nlf.py "your_video_directory"
 ```
 
-Then, we can use the following command to generate the video:
+Then, you can use the following command to animate the image guided by 4D motion tokens:
 
 ```bash
 python infer.py --ref_image_path "ref_images/hunam.png" --motion_data_path "data/sample_data.pkl" --output_path "inference_output"
@@ -103,6 +103,12 @@ python infer.py --ref_image_path "ref_images/hunam.png" --motion_data_path "data
 - `--ref_image_path`: Path to the image of reference character.
 - `--motion_data_path`: Path to the motion sequence (.pkl format).
 - `--output_path`: Where to save the generated animation results.
+
+For our 4DMoT, you can run the following command to train the model on your dataset:
+
+```bash
+accelerate launch train_vqvae.py
+```
 
 
 ## 📄 Citation
