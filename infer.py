@@ -188,7 +188,7 @@ def inference(device, motion_data_path, ref_image_path='', output_dir='inference
         ).frames[0]
 
         # save results
-        save_path = f"inference/{ref_image_path.split('/')[-1].split('.png')[0]}_data_{index}_guidance_{guidance_scale}.mp4"
+        save_path = f"{output_dir}/{ref_image_path.split('/')[-1].split('.png')[0]}_data_{index}_guidance_{guidance_scale}.mp4"
         vis_images = []
         for k in range(len(pose_images_before)):
             vis_image = [to_pil(((ref_images[k] + 1) * 127.5).clamp(0, 255).to(torch.uint8)), to_pil(((input_images[k] + 1) * 127.5).clamp(0, 255).to(torch.uint8)), pose_images_before[k], pose_images_after[k], output_images[k]]
