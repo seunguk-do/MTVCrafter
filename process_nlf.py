@@ -102,10 +102,8 @@ def process_directory(video_dir):
                 output_dir = root + '_smpl'
                 # print(output_dir)
                 print(video_path)
-                try:
-                    process_video(video_path, output_dir)
-                except OSError as e:
-                    print(f"捕获到 OSError: {e}")
+                process_video(video_path, output_dir)
+
 
 
 if __name__ == '__main__':
