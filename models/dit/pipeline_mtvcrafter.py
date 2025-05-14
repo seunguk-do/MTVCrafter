@@ -171,7 +171,6 @@ def get_3d_motion_spatial_embed(
         freqs_sin = freqs.sin().repeat_interleave(2, dim=1).float()  # [S, D]
         return freqs_cos, freqs_sin
     
-    # 为每个轴创建位置编码
     # relative_pos_x = joints_mean[:, 0] - joints_mean[0, 0]
     # relative_pos_y = joints_mean[:, 1] - joints_mean[0, 1]
     # relative_pos_z = joints_mean[:, 2] - joints_mean[0, 2]
