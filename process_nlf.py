@@ -76,7 +76,7 @@ def generate_video(image_paths, output_path):
         return
     height, width, layers = frame.shape
 
-    fourcc = cv2.VideoWriter_fourcc(*'mp4v')  # 尝试使用 MJPG 编码器
+    fourcc = cv2.VideoWriter_fourcc(*'mp4v')
     video = cv2.VideoWriter(output_path, fourcc, 30, (width, height))
 
     if not video.isOpened():
