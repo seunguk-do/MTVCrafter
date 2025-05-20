@@ -22,6 +22,12 @@
 
 </div>
 
+## 📌 To-Do List
+
+- [ ] Release **4D MoT** model  
+- [ ] Release **MV-DiT-7B (based on CogVideoX-5B)**  
+- [ ] Release **MV-DiT-21B (based on Wan-2.1-14B)** 
+
 
 ## 🔍 Abstract
 
