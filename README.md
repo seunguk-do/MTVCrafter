@@ -60,8 +60,6 @@ To further improve the quality of generation and generalization,
 we use learnable unconditional tokens for motion classifier-free guidance.
 
 
-## 
-
 
 ## 🎞️ Animation
 
