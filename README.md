@@ -2,7 +2,7 @@
 
 <div align="center">
 
-<h2><a href="https://arxiv.org/abs/2408.10605">MUSES: 3D-Controllable Image Generation via Multi-Modal Agent Collaboration</a></h2>
+<h2><a href="https://arxiv.org/abs/2408.10605">MTVCrafter: 4D Motion Tokenization for Open-World Human Image Animation</a></h2>
 
 > Official project page of **MTVCrafter**, a novel framework for general and high-quality human image animation using raw 3D motion sequences.
 
