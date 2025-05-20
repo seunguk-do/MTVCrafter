@@ -23,7 +23,7 @@
 </div>
 
 
-## 📌 To-Do List
+## 📌 ToDo List
 
 - [x] Release **global dataset statistics** (mean / std)  
 - [x] Release **4D MoT** model  
