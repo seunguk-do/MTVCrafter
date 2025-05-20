@@ -1,6 +1,27 @@
-# MTVCrafter: 4D Motion Tokenization for Open-World Human Image Animation
+<meta name="google-site-verification" content="-XQC-POJtlDPD3i2KSOxbFkSBde_Uq9obAIh_4mxTkM" />
+
+<div align="center">
+
+<h2><a href="https://arxiv.org/abs/2408.10605">MUSES: 3D-Controllable Image Generation via Multi-Modal Agent Collaboration</a></h2>
 
 > Official project page of **MTVCrafter**, a novel framework for general and high-quality human image animation using raw 3D motion sequences.
+
+<!--
+[Yanbo Ding](https://github.com/DINGYANB),
+[Shaobin Zhuang](https://scholar.google.com/citations?user=PGaDirMAAAAJ&hl=zh-CN&oi=ao), 
+[Kunchang Li](https://scholar.google.com/citations?user=D4tLSbsAAAAJ), 
+[Zhengrong Yue](https://arxiv.org/search/?searchtype=author&query=Zhengrong%20Yue), 
+[Yu Qiao](https://scholar.google.com/citations?user=gFtI-8QAAAAJ&hl), 
+[Yali Wang†](https://scholar.google.com/citations?user=hD948dkAAAAJ)
+-->
+
+[![arXiv](https://img.shields.io/badge/arXiv-2408.10605-b31b1b.svg)](https://arxiv.org/abs/2408.10605)
+[![GitHub](https://img.shields.io/badge/GitHub-MUSES-blue?logo=github)](https://github.com/DINGYANB/MUSES)
+[![Hugging Face Space](https://img.shields.io/badge/%F0%9F%A4%97%20Hugging%20Face-Models-yellow)](https://huggingface.co/yanboding/MUSES/)
+[![Project Page](https://img.shields.io/badge/🌐%20Project%20Page-GitHub.io-brightgreen)](https://dingyanbo.github.io/MUSES/)
+
+</div>
+
 
 ## 🔍 Abstract
 
