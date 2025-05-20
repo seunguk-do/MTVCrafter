@@ -18,7 +18,7 @@
 [![arXiv](https://img.shields.io/badge/arXiv-2408.10605-b31b1b.svg)](https://www.arxiv.org/abs/2505.10238)
 [![GitHub](https://img.shields.io/badge/GitHub-MTVCrafter-blue?logo=github)](https://github.com/DINGYANB/MTVCrafter)
 [![Hugging Face Space](https://img.shields.io/badge/%F0%9F%A4%97%20Hugging%20Face-Models-yellow)](https://huggingface.co/yanboding/)
-[![Project Page](https://img.shields.io/badge/🌐Page-GitHub.io-brightgreen)](https://dingyanb.github.io/MTVCtafter/)
+[![Project Page](https://img.shields.io/badge/🌐%20Page-GitHub.io-brightgreen)](https://dingyanb.github.io/MTVCtafter/)
 
 </div>
 
