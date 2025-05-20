@@ -132,8 +132,18 @@ accelerate launch train_vqvae.py
 
 ## 📄 Citation
 
-Coming soon.
+If you find our work useful, please consider citing:
+
+```bibtex
+@article{ding2025mtvcrafter,
+  title={MTVCrafter: 4D Motion Tokenization for Open-World Human Image Animation},
+  author={Ding, Yanbo},
+  journal={arXiv preprint arXiv:2505.10238},
+  year={2025}
+}
+```
 
 ## 📬 Contact
 
-For questions or collaboration, feel free to reach out via GitHub Issues.
+For questions or collaboration, feel free to reach out via GitHub Issues
+or email me at 📧 yb.ding@siat.ac.cn.
