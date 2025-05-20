@@ -100,7 +100,7 @@ we use learnable unconditional tokens for motion classifier-free guidance.
 We recommend using a clean Python environment (Python 3.10+).
 
 ```bash
-clone this repository && cd MTVCrafter
+clone this repository && cd MTVCrafter-main
 
 # Create virtual environment
 conda create -n mtvcrafter python=3.11
