@@ -143,11 +143,14 @@ accelerate launch train_vqvae.py
 If you find our work useful, please consider citing:
 
 ```bibtex
-@article{ding2025mtvcrafter,
-  title={MTVCrafter: 4D Motion Tokenization for Open-World Human Image Animation},
-  author={Ding, Yanbo},
-  journal={arXiv preprint arXiv:2505.10238},
-  year={2025}
+@misc{ding2025mtvcrafter4dmotiontokenization,
+      title={MTVCrafter: 4D Motion Tokenization for Open-World Human Image Animation}, 
+      author={Yanbo Ding and Xirui Hu and Zhizhi Guo and Yali Wang},
+      year={2025},
+      eprint={2505.10238},
+      archivePrefix={arXiv},
+      primaryClass={cs.CV},
+      url={https://arxiv.org/abs/2505.10238}, 
 }
 ```
 
