@@ -171,6 +171,7 @@ def get_3d_motion_spatial_embed(
         freqs_sin = freqs.sin().repeat_interleave(2, dim=1).float()  # [S, D]
         return freqs_cos, freqs_sin
     
+    # 为每个轴创建位置编码
     # relative_pos_x = joints_mean[:, 0] - joints_mean[0, 0]
     # relative_pos_y = joints_mean[:, 1] - joints_mean[0, 1]
     # relative_pos_z = joints_mean[:, 2] - joints_mean[0, 2]
@@ -340,7 +341,6 @@ class MTVCrafterPipeline(DiffusionPipeline):
         model_path,
         transformer_model_path=None,
         scheduler_type='ddim',
-        guider_model_path=None,
         torch_dtype=None,
         **kwargs,
     ):  
@@ -623,14 +623,13 @@ class MTVCrafterPipeline(DiffusionPipeline):
         )   # [1, x, 16, h/8, w/8]
 
         if ref_images is not None:
-            ref_images = self.video_processor.preprocess(ref_images)
-            ref_images = rearrange(ref_images.unsqueeze(0), 'b f c h w -> b c f h w')   # torch.Size([1, 3, 25, 480, 720])  
+            ref_images = rearrange(ref_images.unsqueeze(0), 'b f c h w -> b c f h w')
             ref_latents = self.vae.encode(
                 ref_images.to(dtype=self.vae.dtype, device=self.vae.device)             
             ).latent_dist.sample()
-            ref_latents = rearrange(ref_latents, 'b c f h w -> b f c h w')              # torch.Size([1, 7, 16, 60, 90])
+            ref_latents = rearrange(ref_latents, 'b c f h w -> b f c h w')    
             if do_classifier_free_guidance:
-                ref_latents = torch.cat([ref_latents, ref_latents], dim=0)              # torch.Size([2, 7, 16, 60, 90])
+                ref_latents = torch.cat([ref_latents, ref_latents], dim=0)
         
         motion_embeds = motion_embeds.to(latents.dtype)
         if motion_embeds is not None and do_classifier_free_guidance:
@@ -674,7 +673,7 @@ class MTVCrafterPipeline(DiffusionPipeline):
                     motion_emb=motion_embeds,
                     return_dict=False,
                 )[0]
-                noise_pred = noise_pred.float()     # [2, 7, 16, 60, 90]
+                noise_pred = noise_pred.float()     # [b, f, c, h, w]
 
                 # perform guidance
                 if use_dynamic_cfg:
