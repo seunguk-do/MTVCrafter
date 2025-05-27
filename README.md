@@ -27,7 +27,7 @@
 
 - [x] Release **global dataset statistics** (mean / std)  
 - [x] Release **4D MoT** model  
-- [ ] Release **MV-DiT-7B** (based on *CogVideoX-5B*)  
+- [x] Release **MV-DiT-7B** (based on *CogVideoX-5B*)  
 - [ ] Release **MV-DiT-21B** (based on *Wan-2.1-14B*)  
 
 
