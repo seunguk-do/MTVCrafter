@@ -102,7 +102,8 @@ we use learnable unconditional tokens for motion classifier-free guidance.
 We recommend using a clean Python environment (Python 3.10+).
 
 ```bash
-clone this repository && cd MTVCrafter-main
+git clone https://github.com/your-username/MTVCrafter.git
+cd MTVCrafter
 
 # Create virtual environment
 conda create -n mtvcrafter python=3.11
@@ -111,6 +112,19 @@ conda activate mtvcrafter
 # Install dependencies
 pip install -r requirements.txt
 ```
+
+For models regarding:
+
+1. Download the NLF-Pose estimator we use (`nlf_l_multi.torchscript`) from the  
+   [NLF Release Page](https://github.com/isarandi/nlf/releases)
+
+2. Download the pretrained CogVideoX-5B checkpoint from  
+   [CogVideoX-5B on Hugging Face](https://huggingface.co/THUDM/CogVideoX-5b)
+
+3. Download our MV-DiT and 4DMoT checkpoint from  
+   [MTVCrafter Checkpoints on Hugging Face](https://huggingface.co/yanboding/MTVCrafter)
+
+
 
 ## 🚀 Usage
 
