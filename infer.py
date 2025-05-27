@@ -112,8 +112,8 @@ def inference(device, motion_data_path, ref_image_path='', output_dir='inference
 
     # load model
     pipe = MTVCrafterPipeline.from_pretrained(
-        model_path='THUDM-CogVideoX-5b',
-        transformer_model_path = 'MTVCrafter/MV-DiT/MV-DiT-7B',
+        model_path='THUDM/CogVideoX-5b',
+        transformer_model_path = 'MTVCrafter/MV-DiT/CogVideoX/MV-DiT-7B',
         # transformer_model_path = '/nvfile-heatstorage/human_guozz2/code/dyb/ticao/giga-train/gt_projects/experiments/train_ticao_11k_0330_new_vae/models/checkpoint_epoch_64_step_22464/transformer',
         torch_dtype=torch.bfloat16,
         scheduler_type='dpm',
