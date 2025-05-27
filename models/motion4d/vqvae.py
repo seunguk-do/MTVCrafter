@@ -7,7 +7,7 @@ from typing import Any, Dict, Optional, Tuple, Union
 from diffusers.models.attention import Attention
 
 
-class CogVideoXAttnProcessor2_0:
+class AttnProcessor:
     r"""Processor for implementing scaled dot-product attention for the
     CogVideoX model.
 
@@ -16,7 +16,7 @@ class CogVideoXAttnProcessor2_0:
 
     def __init__(self):
         if not hasattr(F, 'scaled_dot_product_attention'):
-            raise ImportError('CogVideoXAttnProcessor requires PyTorch 2.0, to use it, please upgrade PyTorch to 2.0.')
+            raise ImportError('AttnProcessor requires PyTorch 2.0, to use it, please upgrade PyTorch to 2.0.')
 
     def __call__(
         self,
@@ -50,6 +50,14 @@ class CogVideoXAttnProcessor2_0:
         if attn.norm_k is not None:
             key = attn.norm_k(key)
 
+        sp_group = get_sequence_parallel_group()
+        if sp_group is not None:
+            sp_size = dist.get_world_size(sp_group)
+            query = _all_in_all_with_text(query, text_seq_length, sp_group, sp_size, mode=1)
+            key = _all_in_all_with_text(key, text_seq_length, sp_group, sp_size, mode=1)
+            value = _all_in_all_with_text(value, text_seq_length, sp_group, sp_size, mode=1)
+            text_seq_length *= sp_size
+
         # Apply RoPE if needed
         if image_rotary_emb is not None:
             from diffusers.models.embeddings import apply_rotary_emb
@@ -65,6 +73,11 @@ class CogVideoXAttnProcessor2_0:
         hidden_states = F.scaled_dot_product_attention(
             query, key, value, attn_mask=attention_mask, dropout_p=0.0, is_causal=False
         )
+
+        if sp_group is not None:
+            hidden_states = _all_in_all_with_text(hidden_states, text_seq_length, sp_group, sp_size, mode=2)
+            text_seq_length = text_seq_length // sp_size
+
         hidden_states = hidden_states.transpose(1, 2).reshape(batch_size, -1, attn.heads * head_dim)
 
         # linear proj
@@ -103,7 +116,7 @@ class Encoder(nn.Module):
         #     eps=1e-6,
         #     bias=True,
         #     out_bias=True,
-        #     processor=CogVideoXAttnProcessor2_0(),
+        #     processor=AttnProcessor(),
         # )
         self.conv_out = nn.Conv2d(mid_channels[-1], out_channels, kernel_size=3, stride=1, padding=1)
     
@@ -214,7 +227,7 @@ class VectorQuantizer(nn.Module):
 
     def forward(self, x, return_vq=False):
         # import pdb; pdb.set_trace()
-        bs, c, f, j = x.shape   # SMPL data frames: [bs, 3072, 13, 24]
+        bs, c, f, j = x.shape   # SMPL data frames: [bs, 3072, f, j]
 
         # Preprocess
         x = self.preprocess(x)
@@ -281,7 +294,7 @@ class Decoder(nn.Module):
         #     eps=1e-6,
         #     bias=True,
         #     out_bias=True,
-        #     processor=CogVideoXAttnProcessor2_0(),
+        #     processor=AttnProcessor(),
         # )
         self.conv_out = nn.Conv2d(mid_channels[-1], out_channels, kernel_size=3, stride=1, padding=1)
 
@@ -474,18 +487,15 @@ class SMPL_VQVAE(nn.Module):
             return torch.cat(x_output, dim=2), None, None
     
     def forward(self, x, return_vq=False):
-        x = x.permute(0, 3, 1, 2)   
-        # print("input", x.shape)   # (batch_size, channels=3, frames=25, joints=24)
+        x = x.permute(0, 3, 1, 2)
         if not self.vq.is_train:
             x, loss = self.encdec_slice_frames(x, frame_batch_size=8, encdec=self.encoder, return_vq=return_vq)
         else:
             x, loss, perplexity = self.encdec_slice_frames(x, frame_batch_size=8, encdec=self.encoder, return_vq=return_vq)
         if return_vq:
             return x, loss
-        # print("enc", x.shape, loss, perplexity)       # (batch_size, channels=32, frames=7, joints=24)
         x, _, _ = self.encdec_slice_frames(x, frame_batch_size=2, encdec=self.decoder, return_vq=return_vq)
         x = x.permute(0, 2, 3, 1)
-        # print("dec", x.shape)       # (batch_size, frames=25, joints=24, channels=3)
         if self.vq.is_train:
             return x, loss, perplexity
         return x, loss
