@@ -19,7 +19,7 @@ def get_args():
     parser = argparse.ArgumentParser()
     parser.add_argument('--data_root', type=str, default='./')
     parser.add_argument('--num_frames', type=int, default=49)
-    parser.add_argument('--batch_size', type=int, default=8)   # 32
+    parser.add_argument('--batch_size', type=int, default=32)
     parser.add_argument('--max_epoch', type=int, default=1e9)
     parser.add_argument('--total_iter', type=int, default=200000)
     parser.add_argument('--world_size', type=int, default=1)
