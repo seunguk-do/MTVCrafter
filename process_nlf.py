@@ -3,6 +3,7 @@ import sys
 import cv2
 import torch
 import pickle
+import torchvision
 from tqdm import tqdm
 
 # Load the pre-trained model
@@ -54,7 +55,7 @@ def process_video(video_path, output_dir):
         'frame_count': frame_count,
         'video_width': video_width,
         'video_height': video_height,
-        'poses': pose_results
+        'pose': pose_results
     }
 
     # Save to pkl file
