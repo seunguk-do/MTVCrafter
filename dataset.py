@@ -134,7 +134,7 @@ class SMPLDataset(torch.utils.data.Dataset):
                 }
                 return result
             else:
-                print(idx, data['video_path'], "skipped")
+                print(idx, video_path, "skipped")
                 return None
 
 
@@ -187,6 +187,7 @@ class SMPLDataset(torch.utils.data.Dataset):
     def __len__(self):
         return len(self.data_list)
 
+    # use for MV-DiT training
     # def __getitem__(self, idx):
     #     video_path = self.data_list[idx]['video_path'].replace('/nvfile-heatstorage', '/gemini-1/space')
     #     while not os.path.exists(video_path):
@@ -222,6 +223,7 @@ class SMPLDataset(torch.utils.data.Dataset):
 
     #     return result
 
+    # use for 4DMoT training
     def __getitem__(self, idx):
         video_path = self.data_list[idx]['video_path']
         while not os.path.exists(video_path):
