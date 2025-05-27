@@ -115,14 +115,11 @@ pip install -r requirements.txt
 
 For models regarding:
 
-1. Download the NLF-Pose estimator we use (`nlf_l_multi.torchscript`) from the  
-   [NLF Release Page](https://github.com/isarandi/nlf/releases)
+1. Download the NLF-Pose estimator we use (`nlf_l_multi.torchscript`) from the [NLF Release Page](https://github.com/isarandi/nlf/releases).
 
-2. Download the pretrained CogVideoX-5B checkpoint from  
-   [CogVideoX-5B on Hugging Face](https://huggingface.co/THUDM/CogVideoX-5b)
+2. Download the pretrained CogVideoX-5B checkpoint from [CogVideoX-5B on Hugging Face](https://huggingface.co/THUDM/CogVideoX-5b).
 
-3. Download our MV-DiT and 4DMoT checkpoint from  
-   [MTVCrafter Checkpoints on Hugging Face](https://huggingface.co/yanboding/MTVCrafter)
+3. Download our MV-DiT and 4DMoT checkpoint from  [MTVCrafter Checkpoints on Hugging Face](https://huggingface.co/yanboding/MTVCrafter).
 
 
 
