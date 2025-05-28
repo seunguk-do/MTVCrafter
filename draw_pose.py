@@ -27,12 +27,14 @@ def p3d_to_p2d(point_3d, height, width):    # point3d n*1024*3
     return point_2d[:,:,:]      # n*1024*2
 
 
-def get_pose_images(smpl_data, offset, mean, std):
+def get_pose_images(smpl_data, offset):
     pose_images = []
     for data in smpl_data:   
-        joints3d = data.numpy()
+        if isinstance(data, np.ndarray):
+            joints3d = data
+        else:
+            joints3d = data.numpy()
         canvas = np.zeros(shape=(offset[0], offset[1], 3), dtype=np.uint8)
-        joints3d = joints3d * std + mean
         joints3d = p3d_to_p2d(joints3d, offset[0], offset[1])
         canvas = draw_3d_points(canvas, joints3d[0], stickwidth=int(offset[1]/350))
         pose_images.append(Image.fromarray(canvas))
