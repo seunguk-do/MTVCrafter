@@ -28,7 +28,8 @@
 - [x] Release **global dataset statistics** (mean / std)  
 - [x] Release **4D MoT** model  
 - [x] Release **MV-DiT-7B** (based on *CogVideoX-5B*)  
-- [ ] Release **MV-DiT-21B** (based on *Wan-2.1-14B*)  
+- [ ] Release **MV-DiT-21B** (based on *Wan-2.1-14B*)
+- [ ] Release a Hugging Face Demo Space
 
 
 ## 🔍 Abstract
