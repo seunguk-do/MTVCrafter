@@ -140,7 +140,7 @@ def inference(device, motion_data_path, ref_image_path='', output_dir='inference
         print("sample_indexes:", sample_indexes)
 
         # read control video
-        input_images = sample_video(decord.VideoReader(data['video_path'].replace('/nvfile-heatstorage/dyb/S2V/DATA', '/nvfile-heatstorage/human_guozz2/data/dyb')), sample_indexes, method=2)
+        input_images = sample_video(decord.VideoReader(data['video_path']), sample_indexes, method=2)
         input_images = torch.from_numpy(input_images).permute(0, 3, 1, 2).contiguous()
         input_images = F.resize(input_images, (new_height, new_width), InterpolationMode.BILINEAR)
         input_images = F.crop(input_images, y1, x1, dst_height, dst_width)
