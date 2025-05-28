@@ -52,7 +52,7 @@ def process_video(video_path, output_dir):
     # Prepare output data
     output_data = {
         'video_path': video_path,
-        'frame_count': frame_count,
+        'video_length': frame_count,
         'video_width': video_width,
         'video_height': video_height,
         'pose': pose_results
