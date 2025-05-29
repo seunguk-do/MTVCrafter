@@ -193,7 +193,7 @@ def inference(device, motion_data_path, ref_image_path='', output_dir='inference
             height=dst_height,
             width=dst_width,
             num_frames=num_frames,
-            num_inference_steps=25,
+            num_inference_steps=50,
             guidance_scale=guidance_scale,
             seed=6666,
             ref_images=ref_images,
