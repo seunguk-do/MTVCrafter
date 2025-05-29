@@ -209,7 +209,7 @@ def inference(device, motion_data_path, ref_image_path='', output_dir='inference
             vis_image = [to_pil(((ref_images[k] + 1) * 127.5).clamp(0, 255).to(torch.uint8)), to_pil(((input_images[k] + 1) * 127.5).clamp(0, 255).to(torch.uint8)), pose_images_before[k], pose_images_after[k], output_images[k]]
             vis_image = concat_images_grid(vis_image, cols=len(vis_image), pad=2)
             vis_images.append(vis_image)
-        imageio.mimsave(save_path, vis_images, fps=20)
+        imageio.mimsave(save_path, vis_images, fps=15)
         print(f"save data to {save_path}")
 
 
