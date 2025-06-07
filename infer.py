@@ -14,6 +14,7 @@ from tqdm import tqdm
 from torchvision import transforms
 from torchvision.transforms import functional as F
 from torchvision.transforms import ToPILImage, InterpolationMode
+from huggingface_hub import snapshot_download
 
 from dataset import SMPLDataset
 from models import MTVCrafterPipeline
@@ -110,25 +111,45 @@ def inference(device, motion_data_path, ref_image_path='', output_dir='inference
     pe_mean = np.load('data/mean.npy')
     pe_std = np.load('data/std.npy')
 
-    # load model
+    # download the full repo (cached after the first download)
+    base_dir = snapshot_download("yanboding/MTVCrafter")
+    
+    # load main pipeline
     pipe = MTVCrafterPipeline.from_pretrained(
         model_path='THUDM/CogVideoX-5b',
-        transformer_model_path = 'MTVCrafter/MV-DiT/CogVideoX/MV-DiT-7B',
+        transformer_model_path=os.path.join(base_dir, "MV-DiT/CogVideoX/MV-DiT-7B"),
         torch_dtype=torch.bfloat16,
         scheduler_type='dpm',
     ).to(device)
+    
+    # optional CPU memory offload
     # pipe.enable_model_cpu_offload()
     pipe.vae.enable_tiling()
     pipe.vae.enable_slicing()
-
-    # load vqvae
-    state_dict = torch.load("MTVCrafter/4DMoT/mp_rank_00_model_states.pt", map_location="cpu")
-    motion_encoder = Encoder(in_channels=3, mid_channels=[128, 512], out_channels=3072, downsample_time=[2, 2], downsample_joint=[1, 1])
+    
+    # load motion VQ-VAE model
+    motion_encoder = Encoder(
+        in_channels=3,
+        mid_channels=[128, 512],
+        out_channels=3072,
+        downsample_time=[2, 2],
+        downsample_joint=[1, 1]
+    )
     motion_quant = VectorQuantizer(nb_code=8192, code_dim=3072, is_train=False)
-    motion_decoder = Decoder(in_channels=3072, mid_channels=[512, 128], out_channels=3, upsample_rate=2.0, frame_upsample_rate=[2.0, 2.0], joint_upsample_rate=[1.0, 1.0])
+    motion_decoder = Decoder(
+        in_channels=3072,
+        mid_channels=[512, 128],
+        out_channels=3,
+        upsample_rate=2.0,
+        frame_upsample_rate=[2.0, 2.0],
+        joint_upsample_rate=[1.0, 1.0]
+    )
+    ckpt_path = os.path.join(base_dir, "4DMoT/mp_rank_00_model_states.pt")
+    state_dict = torch.load(ckpt_path, map_location="cpu")
     vqvae = SMPL_VQVAE(motion_encoder, motion_decoder, motion_quant).to(device)
     print(vqvae.load_state_dict(state_dict['module'], strict=True))
-    
+
+    # inference loop
     for index, data in enumerate(data_list):
         # ceter cropping
         new_height, new_width = get_new_height_width(data, dst_height, dst_width)
@@ -203,7 +224,8 @@ def inference(device, motion_data_path, ref_image_path='', output_dir='inference
         ).frames[0]
 
         # save result
-        save_path = f"{output_dir}/{index}_{ref_image_path.split('/')[-1].split('.png')[0]}_{os.path.basename(data['video_path']).replace('.mp4', '')}_guidance_{guidance_scale}.mp4"
+        ref_name = os.path.basename(ref_image_path).split('.png')[0] if ref_image_path else "fisrt_frame"
+        save_path = f"{output_dir}/{index}_{ref_name}_{os.path.basename(data['video_path']).replace('.mp4', '')}_guidance_{guidance_scale}.mp4"
         vis_images = []
         for k in range(len(pose_images_before)):
             vis_image = [to_pil(((ref_images[k] + 1) * 127.5).clamp(0, 255).to(torch.uint8)), to_pil(((input_images[k] + 1) * 127.5).clamp(0, 255).to(torch.uint8)), pose_images_before[k], pose_images_after[k], output_images[k]]
