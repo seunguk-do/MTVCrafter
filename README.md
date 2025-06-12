@@ -157,7 +157,7 @@ If you find our work useful, please consider citing:
 ```bibtex
 @misc{ding2025mtvcrafter4dmotiontokenization,
       title={MTVCrafter: 4D Motion Tokenization for Open-World Human Image Animation}, 
-      author={Yanbo Ding and Xirui Hu and Zhizhi Guo and Yali Wang},
+      author={Yanbo Ding and Xirui Hu and Zhizhi Guo and Chi Zhang and Yali Wang},
       year={2025},
       eprint={2505.10238},
       archivePrefix={arXiv},
