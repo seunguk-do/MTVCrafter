@@ -6,19 +6,16 @@
 
 > Official project page of **MTVCrafter**, a novel framework for general and high-quality human image animation using raw 3D motion sequences.
 
-<!--
-[Yanbo Ding](https://github.com/DINGYANB),
-[Shaobin Zhuang](https://scholar.google.com/citations?user=PGaDirMAAAAJ&hl=zh-CN&oi=ao), 
-[Kunchang Li](https://scholar.google.com/citations?user=D4tLSbsAAAAJ), 
-[Zhengrong Yue](https://arxiv.org/search/?searchtype=author&query=Zhengrong%20Yue), 
-[Yu Qiao](https://scholar.google.com/citations?user=gFtI-8QAAAAJ&hl), 
+[Yanbo Ding](https://scholar.google.com/citations?user=r_ty-f0AAAAJ&hl=zh-CN),
+[Xirui Hu](https://openreview.net/profile?id=~Xirui_Hu1),
+[Zhizhi Guo](https://dblp.org/pid/179/1036.html),
 [Yali Wang†](https://scholar.google.com/citations?user=hD948dkAAAAJ)
--->
 
 [![arXiv](https://img.shields.io/badge/arXiv-2408.10605-b31b1b.svg)](https://www.arxiv.org/abs/2505.10238)
 [![GitHub](https://img.shields.io/badge/GitHub-MTVCrafter-blue?logo=github)](https://github.com/DINGYANB/MTVCrafter)
 [![Hugging Face Space](https://img.shields.io/badge/%F0%9F%A4%97%20Hugging%20Face-Models-yellow)](https://huggingface.co/yanboding/)
-[![Project Page](https://img.shields.io/badge/🌐%20Page-GitHub.io-brightgreen)](https://dingyanb.github.io/MTVCtafter/)
+[![Project Page1](https://img.shields.io/badge/🌐%20Page1-GitHub.io-brightgreen)](https://dingyanb.github.io/MTVCtafter/)
+[![Project Page2](https://img.shields.io/badge/🌐%20Page2-GitHub.io-brightgreen)](https://dingyanb.github.io/MTVCtafter/)
 
 </div>
 
