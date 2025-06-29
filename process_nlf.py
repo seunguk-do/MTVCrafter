@@ -4,10 +4,52 @@ import cv2
 import torch
 import pickle
 import torchvision
+import shutil
+import glob
 from tqdm import tqdm
 
+def find_nlf_model():
+    """Find NLF model file in root directory or models directory"""
+    # Check for model files in root directory
+    root_patterns = ['nlf_l_multi.torchscript', 'nlf_l_multi_*.torchscript']
+    for pattern in root_patterns:
+        matches = glob.glob(pattern)
+        if matches:
+            print(f"Found NLF model: {matches[0]}")
+            return matches[0]
+    
+    # Check in models directory
+    models_patterns = ['models/nlf_l_multi.torchscript', 'models/nlf_l_multi_*.torchscript']
+    for pattern in models_patterns:
+        matches = glob.glob(pattern)
+        if matches:
+            # Move to root directory
+            model_path = matches[0]
+            root_path = os.path.basename(model_path)
+            print(f"Found NLF model in models directory: {model_path}")
+            print(f"Moving to root directory as: {root_path}")
+            shutil.move(model_path, root_path)
+            return root_path
+    
+    return None
+
+def download_nlf_model():
+    """Download NLF model if not found locally"""
+    print("NLF model not found locally.")
+    print("\nTo use this script, you need the NLF model file.")
+    print("Please download the model from the official source and place it in the root directory.")
+    print("Expected filename: nlf_l_multi.torchscript or nlf_l_multi_<version>.torchscript")
+    print("\nAlternatively, if you have the model in the 'models/' directory, it will be automatically copied.")
+    sys.exit(1)
+
+# Find or download the model
+model_path = find_nlf_model()
+if model_path is None:
+    download_nlf_model()
+
 # Load the pre-trained model
-model = torch.jit.load('nlf_l_multi.torchscript').cuda().eval()
+print(f"Loading NLF model from: {model_path}")
+model = torch.jit.load(model_path).cuda().eval()
 
 def process_video(video_path, output_dir):
     # Ensure output directory exists
