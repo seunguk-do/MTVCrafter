@@ -117,7 +117,7 @@ def inference(device, motion_data_path, ref_image_path='', output_dir='inference
     # load main pipeline
     pipe = MTVCrafterPipeline.from_pretrained(
         model_path='THUDM/CogVideoX-5b',
-        transformer_model_path=os.path.join(base_dir, "MV-DiT/CogVideoX/MV-DiT-7B"),
+        transformer_model_path=os.path.join(base_dir, "MV-DiT/CogVideoX"),
         torch_dtype=torch.bfloat16,
         scheduler_type='dpm',
     ).to(device)
@@ -160,14 +160,26 @@ def inference(device, motion_data_path, ref_image_path='', output_dir='inference
         sample_indexes = get_sample_indexes(data['video_length'], num_frames, stride=1)
         print("sample_indexes:", sample_indexes)
 
-        # read control video
-        input_images = sample_video(decord.VideoReader(data['video_path']), sample_indexes, method=2)
-        input_images = torch.from_numpy(input_images).permute(0, 3, 1, 2).contiguous()
-        input_images = F.resize(input_images, (new_height, new_width), InterpolationMode.BILINEAR)
-        input_images = F.crop(input_images, y1, x1, dst_height, dst_width)
+        # read control video - skip if video doesn't exist
+        try:
+            input_images = sample_video(decord.VideoReader(data['video_path']), sample_indexes, method=2)
+            input_images = torch.from_numpy(input_images).permute(0, 3, 1, 2).contiguous()
+            input_images = F.resize(input_images, (new_height, new_width), InterpolationMode.BILINEAR)
+            input_images = F.crop(input_images, y1, x1, dst_height, dst_width)
+        except (RuntimeError, FileNotFoundError):
+            print(f"Warning: Could not read video at {data['video_path']}. Creating blank frames.")
+            # Create blank frames if video doesn't exist
+            input_images = torch.zeros((num_frames, 3, dst_height, dst_width))
 
         # read reference character image
         if ref_image_path != '':
+            if os.path.isdir(ref_image_path):
+                print(f"Error: '{ref_image_path}' is a directory, not an image file.")
+                print(f"Please specify a specific image file, e.g., --ref_image_path {ref_image_path}/human.png")
+                sys.exit(1)
+            elif not os.path.exists(ref_image_path):
+                print(f"Error: Reference image file '{ref_image_path}' does not exist.")
+                sys.exit(1)
             ref_image = Image.open(ref_image_path).convert("RGB")
             ref_image = torch.from_numpy(np.array(ref_image)).permute(2, 0, 1).contiguous()
             ref_images = torch.stack([ref_image.clone() for _ in range(num_frames)]) 
