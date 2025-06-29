@@ -7,87 +7,6 @@ from typing import Any, Dict, Optional, Tuple, Union
 from diffusers.models.attention import Attention
 
 
-class AttnProcessor:
-    r"""Processor for implementing scaled dot-product attention for the
-    CogVideoX model.
-
-    It applies a rotary embedding on query and key vectors, but does not include spatial normalization.
-    """
-
-    def __init__(self):
-        if not hasattr(F, 'scaled_dot_product_attention'):
-            raise ImportError('AttnProcessor requires PyTorch 2.0, to use it, please upgrade PyTorch to 2.0.')
-
-    def __call__(
-        self,
-        attn: Attention,
-        hidden_states: torch.Tensor,
-        encoder_hidden_states: Optional[torch.Tensor] = None,
-        attention_mask: Optional[torch.Tensor] = None,
-        image_rotary_emb: Optional[torch.Tensor] = None,
-        motion_rotary_emb: Optional[torch.Tensor] = None,
-    ) -> torch.Tensor:
-        import pdb; pdb.set_trace()
-        batch_size, sequence_length, _ = hidden_states.shape 
-
-        if attention_mask is not None:
-            attention_mask = attn.prepare_attention_mask(attention_mask, sequence_length, batch_size)
-            attention_mask = attention_mask.view(batch_size, attn.heads, -1, attention_mask.shape[-1])
-
-        query = attn.to_q(hidden_states)
-        key = attn.to_k(hidden_states)
-        value = attn.to_v(hidden_states)
-
-        inner_dim = key.shape[-1]
-        head_dim = inner_dim // attn.heads
-
-        query = query.view(batch_size, -1, attn.heads, head_dim).transpose(1, 2)    # [batch_size, heads, seq_len, dim]
-        key = key.view(batch_size, -1, attn.heads, head_dim).transpose(1, 2)
-        value = value.view(batch_size, -1, attn.heads, head_dim).transpose(1, 2)
-
-        if attn.norm_q is not None:
-            query = attn.norm_q(query)
-        if attn.norm_k is not None:
-            key = attn.norm_k(key)
-
-        sp_group = get_sequence_parallel_group()
-        if sp_group is not None:
-            sp_size = dist.get_world_size(sp_group)
-            query = _all_in_all_with_text(query, text_seq_length, sp_group, sp_size, mode=1)
-            key = _all_in_all_with_text(key, text_seq_length, sp_group, sp_size, mode=1)
-            value = _all_in_all_with_text(value, text_seq_length, sp_group, sp_size, mode=1)
-            text_seq_length *= sp_size
-
-        # Apply RoPE if needed
-        if image_rotary_emb is not None:
-            from diffusers.models.embeddings import apply_rotary_emb
-            image_seq_length = image_rotary_emb[0].shape[0]
-            query[:, :, :image_seq_length] = apply_rotary_emb(query[:, :, :image_seq_length], image_rotary_emb)
-            if motion_rotary_emb is not None:
-                query[:, :, image_seq_length:] = apply_rotary_emb(query[:, :, image_seq_length:], motion_rotary_emb)
-            if not attn.is_cross_attention:
-                key[:, :, :image_seq_length] = apply_rotary_emb(key[:, :, :image_seq_length], image_rotary_emb)
-                if motion_rotary_emb is not None:
-                    key[:, :, image_seq_length:] = apply_rotary_emb(key[:, :, image_seq_length:], motion_rotary_emb)
-
-        hidden_states = F.scaled_dot_product_attention(
-            query, key, value, attn_mask=attention_mask, dropout_p=0.0, is_causal=False
-        )
-
-        if sp_group is not None:
-            hidden_states = _all_in_all_with_text(hidden_states, text_seq_length, sp_group, sp_size, mode=2)
-            text_seq_length = text_seq_length // sp_size
-
-        hidden_states = hidden_states.transpose(1, 2).reshape(batch_size, -1, attn.heads * head_dim)
-
-        # linear proj
-        hidden_states = attn.to_out[0](hidden_states)
-        # dropout
-        hidden_states = attn.to_out[1](hidden_states)
-
-        return hidden_states
-
-
 class Encoder(nn.Module):
     def __init__(
         self, 
@@ -108,16 +27,6 @@ class Encoder(nn.Module):
         self.resnet2 = ResBlock(mid_channels[0], mid_channels[1])
         self.resnet3 = nn.ModuleList([ResBlock(mid_channels[1], mid_channels[1]) for _ in range(3)])
         self.downsample2 = Downsample(mid_channels[1], mid_channels[1], downsample_time[1], downsample_joint[1])
-        # self.attn = Attention(
-        #     query_dim=dim,
-        #     dim_head=attention_head_dim,
-        #     heads=num_attention_heads,
-        #     qk_norm='layer_norm',
-        #     eps=1e-6,
-        #     bias=True,
-        #     out_bias=True,
-        #     processor=AttnProcessor(),
-        # )
         self.conv_out = nn.Conv2d(mid_channels[-1], out_channels, kernel_size=3, stride=1, padding=1)
     
     def forward(self, x):
@@ -131,7 +40,6 @@ class Encoder(nn.Module):
             x = resnet(x)
         x = self.downsample2(x)
 
-        # x = x + self.attn(x)
         x = self.conv_out(x)
 
         return x
@@ -171,13 +79,13 @@ class VectorQuantizer(nn.Module):
             out = self._tile(x)
             self.codebook = out[:self.nb_code]
         self.code_sum = self.codebook.clone()
-        self.code_count = torch.ones(self.nb_code, device=self.codebook.device)
+        self.code_count = torch.ones(self.nb_code, device=self.codebook.device, dtype=self.codebook.dtype)
         if self.is_train:
           self.init = True
 
     @torch.no_grad()
     def update_codebook(self, x, code_idx):
-        code_onehot = torch.zeros(self.nb_code, x.shape[0], device=x.device)
+        code_onehot = torch.zeros(self.nb_code, x.shape[0], device=x.device, dtype=x.dtype)
         code_onehot.scatter_(0, code_idx.view(1, x.shape[0]), 1)
 
         code_sum = torch.matmul(code_onehot, x)  # [nb_code, code_dim]
@@ -190,20 +98,20 @@ class VectorQuantizer(nn.Module):
         self.code_sum = self.mu * self.code_sum + (1. - self.mu) * code_sum
         self.code_count = self.mu * self.code_count + (1. - self.mu) * code_count
 
-        usage = (self.code_count.view(self.nb_code, 1) >= 1.0).float()
-        self.usage = self.usage.to(usage.device)
+        usage = (self.code_count.view(self.nb_code, 1) >= 1.0).to(x.dtype)
+        self.usage = self.usage.to(x.device)
         if self.reset_count >= 20:      # reset codebook every 20 steps for stability
             self.reset_count = 0
-            usage = (usage + self.usage >= 1.0).float()
+            usage = (usage + self.usage >= 1.0).to(x.dtype)
         else:
             self.reset_count += 1
-            self.usage = (usage + self.usage >= 1.0).float()
+            self.usage = (usage + self.usage >= 1.0).to(x.dtype)
             usage = torch.ones_like(self.usage, device=x.device)
         code_update = self.code_sum.view(self.nb_code, self.code_dim) / self.code_count.view(self.nb_code, 1)
 
-        self.codebook = usage * code_update + (1 - usage) * code_rand
-        prob = code_count / torch.sum(code_count)  
-        perplexity = torch.exp(-torch.sum(prob * torch.log(prob + 1e-7)))
+        self.codebook = (usage * code_update + (1 - usage) * code_rand)
+        prob = code_count / torch.sum(code_count)
+        perplexity = torch.exp(-torch.sum(prob * torch.log(prob + 1e-6)))
             
         return perplexity
 
@@ -227,7 +135,7 @@ class VectorQuantizer(nn.Module):
 
     def forward(self, x, return_vq=False):
         # import pdb; pdb.set_trace()
-        bs, c, f, j = x.shape   # SMPL data frames: [bs, 3072, f, j]
+        bs, c, f, j = x.shape   # SMPL data frames: [bs, 3072, 13, 24]
 
         # Preprocess
         x = self.preprocess(x)
@@ -265,6 +173,8 @@ class VectorQuantizer(nn.Module):
             return x_d, commit_loss
 
 
+
+
 class Decoder(nn.Module):
     def __init__(
         self, 
@@ -286,16 +196,6 @@ class Decoder(nn.Module):
         self.resnet2 = ResBlock(mid_channels[0], mid_channels[1])
         self.resnet3 = nn.ModuleList([ResBlock(mid_channels[1], mid_channels[1]) for _ in range(3)])
         self.upsample2 = Upsample(mid_channels[1], mid_channels[1], frame_upsample_rate=frame_upsample_rate[1], joint_upsample_rate=joint_upsample_rate[1])
-        # self.attn = Attention(
-        #     query_dim=dim,
-        #     dim_head=attention_head_dim,
-        #     heads=num_attention_heads,
-        #     qk_norm='layer_norm',
-        #     eps=1e-6,
-        #     bias=True,
-        #     out_bias=True,
-        #     processor=AttnProcessor(),
-        # )
         self.conv_out = nn.Conv2d(mid_channels[-1], out_channels, kernel_size=3, stride=1, padding=1)
 
     def forward(self, x):
@@ -309,7 +209,6 @@ class Decoder(nn.Module):
             x = resnet(x)
         x = self.upsample2(x)
 
-        # x = x + self.attn(x)
         x = self.conv_out(x)
 
         return x
@@ -450,11 +349,12 @@ class SMPL_VQVAE(nn.Module):
         self.decoder = decoder
         self.vq = vq
     
-    def to(self, device):
-        self.encoder = self.encoder.to(device)
-        self.decoder = self.decoder.to(device)
-        self.vq = self.vq.to(device)
+    def to(self, device, dtype):
+        self.encoder = self.encoder.to(device, dtype)
+        self.decoder = self.decoder.to(device, dtype)
+        self.vq = self.vq.to(device, dtype)
         self.device = device
+        self.dtype = dtype
         return self
     
     def encdec_slice_frames(self, x, frame_batch_size, encdec, return_vq):
@@ -469,13 +369,6 @@ class SMPL_VQVAE(nn.Module):
             end_frame = frame_batch_size * (i + 1) + remaining_frames
             x_intermediate = x[:, :, start_frame:end_frame]
             x_intermediate = encdec(x_intermediate)
-            # if encdec == self.encoder and self.vq is not None:
-            #     x_intermediate, loss, perplexity = self.vq(x_intermediate)
-            #     x_output.append(x_intermediate)
-            #     loss_output.append(loss)
-            #     perplexity_output.append(perplexity)
-            # else:
-            #     x_output.append(x_intermediate)
             x_output.append(x_intermediate)
         if encdec == self.encoder and self.vq is not None and not self.vq.is_train:
             x_output, loss = self.vq(torch.cat(x_output, dim=2), return_vq=return_vq)
@@ -487,15 +380,18 @@ class SMPL_VQVAE(nn.Module):
             return torch.cat(x_output, dim=2), None, None
     
     def forward(self, x, return_vq=False):
-        x = x.permute(0, 3, 1, 2)
+        x = x.permute(0, 3, 1, 2)   
+        # print("input", x.shape)   # (batch_size, channels=3, frames=25, joints=24)
         if not self.vq.is_train:
             x, loss = self.encdec_slice_frames(x, frame_batch_size=8, encdec=self.encoder, return_vq=return_vq)
         else:
             x, loss, perplexity = self.encdec_slice_frames(x, frame_batch_size=8, encdec=self.encoder, return_vq=return_vq)
         if return_vq:
             return x, loss
+        # print("enc", x.shape, loss, perplexity)       # (batch_size, channels=32, frames=7, joints=24)
         x, _, _ = self.encdec_slice_frames(x, frame_batch_size=2, encdec=self.decoder, return_vq=return_vq)
         x = x.permute(0, 2, 3, 1)
+        # print("dec", x.shape)       # (batch_size, frames=25, joints=24, channels=3)
         if self.vq.is_train:
             return x, loss, perplexity
         return x, loss
