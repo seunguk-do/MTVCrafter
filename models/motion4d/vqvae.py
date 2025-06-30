@@ -79,13 +79,13 @@ class VectorQuantizer(nn.Module):
             out = self._tile(x)
             self.codebook = out[:self.nb_code]
         self.code_sum = self.codebook.clone()
-        self.code_count = torch.ones(self.nb_code, device=self.codebook.device, dtype=self.codebook.dtype)
+        self.code_count = torch.ones(self.nb_code, device=self.codebook.device)
         if self.is_train:
           self.init = True
 
     @torch.no_grad()
     def update_codebook(self, x, code_idx):
-        code_onehot = torch.zeros(self.nb_code, x.shape[0], device=x.device, dtype=x.dtype)
+        code_onehot = torch.zeros(self.nb_code, x.shape[0], device=x.device)
         code_onehot.scatter_(0, code_idx.view(1, x.shape[0]), 1)
 
         code_sum = torch.matmul(code_onehot, x)  # [nb_code, code_dim]
@@ -98,18 +98,18 @@ class VectorQuantizer(nn.Module):
         self.code_sum = self.mu * self.code_sum + (1. - self.mu) * code_sum
         self.code_count = self.mu * self.code_count + (1. - self.mu) * code_count
 
-        usage = (self.code_count.view(self.nb_code, 1) >= 1.0).to(x.dtype)
-        self.usage = self.usage.to(x.device)
+        usage = (self.code_count.view(self.nb_code, 1) >= 1.0).float()
+        self.usage = self.usage.to(usage.device)
         if self.reset_count >= 20:      # reset codebook every 20 steps for stability
             self.reset_count = 0
-            usage = (usage + self.usage >= 1.0).to(x.dtype)
+            usage = (usage + self.usage >= 1.0).float()
         else:
             self.reset_count += 1
-            self.usage = (usage + self.usage >= 1.0).to(x.dtype)
+            self.usage = (usage + self.usage >= 1.0).float()
             usage = torch.ones_like(self.usage, device=x.device)
         code_update = self.code_sum.view(self.nb_code, self.code_dim) / self.code_count.view(self.nb_code, 1)
 
-        self.codebook = (usage * code_update + (1 - usage) * code_rand)
+        self.codebook = usage * code_update + (1 - usage) * code_rand
         prob = code_count / torch.sum(code_count)
         perplexity = torch.exp(-torch.sum(prob * torch.log(prob + 1e-6)))
             
@@ -134,8 +134,7 @@ class VectorQuantizer(nn.Module):
         return x
 
     def forward(self, x, return_vq=False):
-        # import pdb; pdb.set_trace()
-        bs, c, f, j = x.shape   # SMPL data frames: [bs, 3072, 13, 24]
+        bs, c, f, j = x.shape   # SMPL data frames: [bs, 3072, f, j]
 
         # Preprocess
         x = self.preprocess(x)
@@ -349,12 +348,19 @@ class SMPL_VQVAE(nn.Module):
         self.decoder = decoder
         self.vq = vq
     
-    def to(self, device, dtype):
-        self.encoder = self.encoder.to(device, dtype)
-        self.decoder = self.decoder.to(device, dtype)
-        self.vq = self.vq.to(device, dtype)
+    # def to(self, device, dtype):
+    #     self.encoder = self.encoder.to(device, dtype)
+    #     self.decoder = self.decoder.to(device, dtype)
+    #     self.vq = self.vq.to(device, dtype)
+    #     self.device = device
+    #     self.dtype = dtype
+    #     return self
+
+    def to(self, device):
+        self.encoder = self.encoder.to(device)
+        self.decoder = self.decoder.to(device)
+        self.vq = self.vq.to(device)
         self.device = device
-        self.dtype = dtype
         return self
     
     def encdec_slice_frames(self, x, frame_batch_size, encdec, return_vq):
@@ -381,17 +387,14 @@ class SMPL_VQVAE(nn.Module):
     
     def forward(self, x, return_vq=False):
         x = x.permute(0, 3, 1, 2)   
-        # print("input", x.shape)   # (batch_size, channels=3, frames=25, joints=24)
         if not self.vq.is_train:
             x, loss = self.encdec_slice_frames(x, frame_batch_size=8, encdec=self.encoder, return_vq=return_vq)
         else:
             x, loss, perplexity = self.encdec_slice_frames(x, frame_batch_size=8, encdec=self.encoder, return_vq=return_vq)
         if return_vq:
             return x, loss
-        # print("enc", x.shape, loss, perplexity)       # (batch_size, channels=32, frames=7, joints=24)
         x, _, _ = self.encdec_slice_frames(x, frame_batch_size=2, encdec=self.decoder, return_vq=return_vq)
         x = x.permute(0, 2, 3, 1)
-        # print("dec", x.shape)       # (batch_size, frames=25, joints=24, channels=3)
         if self.vq.is_train:
             return x, loss, perplexity
         return x, loss
