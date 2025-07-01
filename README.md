@@ -7,7 +7,7 @@
 > Official project page of **MTVCrafter**, a novel framework for general and high-quality human image animation using raw 3D motion sequences.
 
 [Yanbo Ding](https://scholar.google.com/citations?user=r_ty-f0AAAAJ&hl=zh-CN),
-[Xirui Hu](https://openreview.net/profile?id=~Xirui_Hu1),
+[Xirui Hu](https://scholar.google.com/citations?user=-C7R25QAAAAJ&hl=zh-CN&oi=ao),
 [Zhizhi Guo](https://dblp.org/pid/179/1036.html),
 [Yali Wang†](https://scholar.google.com/citations?user=hD948dkAAAAJ)
 
