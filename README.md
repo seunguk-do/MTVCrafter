@@ -11,7 +11,7 @@
 [Zhizhi Guo](https://dblp.org/pid/179/1036.html),
 [Yali Wang†](https://scholar.google.com/citations?user=hD948dkAAAAJ)
 
-[![arXiv](https://img.shields.io/badge/arXiv-2408.10605-b31b1b.svg)](https://www.arxiv.org/abs/2505.10238)
+[![arXiv](https://img.shields.io/badge/📖%20Paper-2408.10605-b31b1b.svg)](https://www.arxiv.org/abs/2505.10238)
 [![Hugging Face Space](https://img.shields.io/badge/%F0%9F%A4%97%20Hugging%20Face-Models-yellow)](https://huggingface.co/yanboding/MTVCrafter)
 [![ModelScope](https://img.shields.io/badge/🤖%20ModelScope-Models-blue)](https://www.modelscope.cn/models/AI-ModelScope/MTVCrafter)
 [![Project Page1](https://img.shields.io/badge/🌐%20Page-CogVideoX-brightgreen)](https://dingyanb.github.io/MTVCtafter/)
