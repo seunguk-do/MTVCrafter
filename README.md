@@ -12,10 +12,10 @@
 [Yali Wang†](https://scholar.google.com/citations?user=hD948dkAAAAJ)
 
 [![arXiv](https://img.shields.io/badge/arXiv-2408.10605-b31b1b.svg)](https://www.arxiv.org/abs/2505.10238)
-[![GitHub](https://img.shields.io/badge/GitHub-MTVCrafter-blue?logo=github)](https://github.com/DINGYANB/MTVCrafter)
-[![Hugging Face Space](https://img.shields.io/badge/%F0%9F%A4%97%20Hugging%20Face-Models-yellow)](https://huggingface.co/yanboding/)
-[![Project Page1](https://img.shields.io/badge/🌐%20Page1-GitHub.io-brightgreen)](https://dingyanb.github.io/MTVCtafter/)
-[![Project Page2](https://img.shields.io/badge/🌐%20Page2-GitHub.io-brightgreen)](https://dingyanb.github.io/MTVCrafter-/)
+[![Hugging Face Space](https://img.shields.io/badge/%F0%9F%A4%97%20Hugging%20Face-Models-yellow)](https://huggingface.co/yanboding/MTVCrafter)
+[![ModelScope](https://img.shields.io/badge/%F0%9F%A4%97%20ModelScope-Models-brightgreen)](https://www.modelscope.cn/models/AI-ModelScope/MTVCrafter)
+[![Project Page1](https://img.shields.io/badge/🌐%20Page-CogVideoX-black)](https://dingyanb.github.io/MTVCtafter/)
+[![Project Page2](https://img.shields.io/badge/🌐%20Page-Wan2.1-black)](https://dingyanb.github.io/MTVCrafter-/)
 
 </div>
 
