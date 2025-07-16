@@ -25,7 +25,7 @@
 - [x] Release **global dataset statistics** (mean / std)  
 - [x] Release **4D MoT** model  
 - [x] Release **MV-DiT-7B** (based on *CogVideoX-T2V-5B*)  
-- [x] Release **MV-DiT-17B** (based on *Wan-2.1-I2V-16B*)
+- [x] Release **MV-DiT-17B** (based on *Wan-2.1-I2V-14B*)
 - [ ] Release a Hugging Face Demo Space
 
 
@@ -89,11 +89,16 @@ For models regarding:
    Download [`nlf_l_multi.torchscript`](https://github.com/isarandi/nlf/releases) from the NLF release page.
 
 2. **MV-DiT Backbone Models**  
-   - **MV-DiT-7B**: Download the [CogVideoX-5B checkpoint](https://huggingface.co/THUDM/CogVideoX-5b).  
-   - **MV-DiT-17B**: Download the [Wan-2-1 checkpoint](https://huggingface.co/alibaba-pai/Wan2.1-Fun-V1.1-14B-InP) and place it under the `wan2.1/` folder.
+   - **CogVideoX**: Download the [CogVideoX-5B checkpoint](https://huggingface.co/THUDM/CogVideoX-5b).  
+   - **Wan-2-1**: Download the [Wan-2-1-14B checkpoint](https://huggingface.co/alibaba-pai/Wan2.1-Fun-V1.1-14B-InP) and place it under the `wan2.1/` folder.
 
 3. **MTVCrafter Checkpoints**  
    Download the MV-DiT and 4DMoT checkpoints from [MTVCrafter on Hugging Face](https://huggingface.co/yanboding/MTVCrafter).
+
+4. *(Optional but recommended)*  
+   Download the enhanced LoRA for better performance of Wan2.1_I2V_14B:  
+   [`Wan2.1_I2V_14B_FusionX_LoRA.safetensors`](https://huggingface.co/vrgamedevgirl84/Wan14BT2VFusioniX/blob/main/FusionX_LoRa/Wan2.1_I2V_14B_FusionX_LoRA.safetensors)  
+   Place it under: `wan2.1/lora/`
 
 ---
 
@@ -121,9 +126,9 @@ python infer_7b.py \
     --output_path "inference_output"
 ```
 
-#### ▶️ Inference of MV-DiT-7B (with text prompt)
+#### ▶️ Inference of MV-DiT-17B (with text control)
 ```bash
-python infer_7b.py \
+python infer_17b.py \
     --ref_image_path "ref_images/woman.png" \
     --motion_data_path "data/sampled_data.pkl" \
     --output_path "inference_output" \
@@ -148,6 +153,14 @@ accelerate launch train_vqvae.py
 ```
 
 ---
+
+## 💙 Acknowledgement
+MTVCrafter is built upon 
+[CogVideoX](https://github.com/THUDM/CogVideo), 
+[Wan-2-1-Fun](https://github.com/aigc-apps/VideoX-Fun).
+We sincerely acknowledge these open-source codes and models.
+We also appreciate the valuable insights from the researchers at Institute of Artificial Intelligence (TeleAI), China Telecom, and Shenzhen Institute of Advanced Technology.
+
 
 ## 📄 Citation
 
