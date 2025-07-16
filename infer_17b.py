@@ -260,7 +260,7 @@ def inference(device, motion_data_path, ref_image_path='', output_dir='inference
                     # smpl poses
                     try:
                         smpl_poses = np.array([pose[0][0].cpu().numpy() for pose in data_dict['pose']['joints3d_nonparam'][:min_num_frames]])
-                        poses = smpl_poses[sample_indexes]
+                        poses = smpl_poses[indices]
                     except:
                         poses = data_dict['pose'][indices]
 
