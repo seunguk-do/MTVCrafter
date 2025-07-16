@@ -10,13 +10,11 @@ import imageio
 import numpy as np
 
 from PIL import Image
-from tqdm import tqdm
 from torchvision import transforms
 from torchvision.transforms import functional as F
 from torchvision.transforms import ToPILImage, InterpolationMode
 from huggingface_hub import snapshot_download
 
-from dataset import SMPLDataset
 from models import MTVCrafterPipeline7B
 from models import VectorQuantizer, Encoder, Decoder, SMPL_VQVAE
 from draw_pose import get_pose_images
