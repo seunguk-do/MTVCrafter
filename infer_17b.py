@@ -13,6 +13,7 @@ from decord import VideoReader
 from omegaconf import OmegaConf
 from torchvision import transforms
 from transformers import AutoTokenizer
+from huggingface_hub import snapshot_download
 from diffusers import FlowMatchEulerDiscreteScheduler
 
 from models import (MTVCrafterPipeline17B, Transformer17B,
