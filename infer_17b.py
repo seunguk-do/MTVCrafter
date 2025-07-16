@@ -275,7 +275,7 @@ def inference(device, motion_data_path, ref_image_path='', output_dir='inference
                     sample = pipeline(
                         prompt = prompt,
                         num_frames = video_length,
-                        num_inference_steps = 10,   # 10 steps is enough when inference with lora
+                        num_inference_steps = 10 if lora_path != "" else 50,
                         negative_prompt = "bad hands, extra limbs, fused fingers, blurry, low quality",
                         height = new_h,
                         width = new_w,
