@@ -1,7 +1,9 @@
 import cv2
 import math
+import torch
 import numpy as np
 from PIL import Image
+from torchvision import transforms
 
 
 def intrinsic_matrix_from_field_of_view(imshape, fov_degrees:float =55 ):   # nlf default fov_degrees 55
@@ -39,6 +41,30 @@ def get_pose_images(smpl_data, offset):
         canvas = draw_3d_points(canvas, joints3d[0], stickwidth=int(offset[1]/350))
         pose_images.append(Image.fromarray(canvas))
     return pose_images
+
+
+def get_control_conditions(poses, h, w):
+    video_transforms = transforms.Normalize(mean=[0.5, 0.5, 0.5], std=[0.5, 0.5, 0.5], inplace=True)
+    control_images = []
+    for idx, pose in enumerate(poses):
+        canvas = np.zeros(shape=(h, w, 3), dtype=np.uint8)
+        try:
+            joints3d = p3d_to_p2d(pose, h, w)
+            canvas = draw_3d_points(
+                canvas,
+                joints3d[0],
+                stickwidth=int(h / 350),
+            )
+            resized_canvas = cv2.resize(canvas, (w, h))
+            # Image.fromarray(resized_canvas).save(f'tmp/{idx}_pose.jpg')
+            control_images.append(resized_canvas)
+        except Exception as e:
+            print("wrong:", e)
+            control_images.append(Image.fromarray(canvas))
+    control_pixel_values = np.array(control_images)
+    control_pixel_values = torch.from_numpy(control_pixel_values).permute(0, 3, 1, 2).contiguous().unsqueeze(0) / 255.
+    control_pixel_values = video_transforms(control_pixel_values)
+    return control_pixel_values
 
 
 def draw_3d_points(canvas, points, stickwidth=2, r=2, draw_line=True):
