@@ -97,6 +97,7 @@ def inference(device, motion_data_path, ref_image_path='', output_dir='inference
     fps = 20                # Frame rate of the saved video
     stride = 1              # Temporal stride for frame sampling
     use_first_clip = False  # Whether to use the first frame of the first clip to compute CLIP embeddings during long video inference
+    min_num_frames = (video_length - overlap) * (infer_num - 1) + video_length
     weight_dtype = torch.bfloat16
     seed = 42
     generator = torch.Generator(device=device).manual_seed(seed)
@@ -202,7 +203,7 @@ def inference(device, motion_data_path, ref_image_path='', output_dir='inference
 
         # read video
         data_dict = data_list[index]    
-        if data_dict['video_length'] < (video_length - overlap) * (infer_num - 1) + video_length:
+        if data_dict['video_length'] < min_num_frames:
             continue
         input_video_path = data_dict["video_path"]
         vr = VideoReader(input_video_path)
@@ -258,7 +259,7 @@ def inference(device, motion_data_path, ref_image_path='', output_dir='inference
 
                     # smpl poses
                     try:
-                        smpl_poses = np.array([pose[0][0].cpu().numpy() for pose in data_dict['pose']['joints3d_nonparam']])
+                        smpl_poses = np.array([pose[0][0].cpu().numpy() for pose in data_dict['pose']['joints3d_nonparam'][:min_num_frames]])
                         poses = smpl_poses[sample_indexes]
                     except:
                         poses = data_dict['pose'][indices]
