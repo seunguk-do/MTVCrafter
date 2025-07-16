@@ -25,7 +25,7 @@
 - [x] Release **global dataset statistics** (mean / std)  
 - [x] Release **4D MoT** model  
 - [x] Release **MV-DiT-7B** (based on *CogVideoX-T2V-5B*)  
-- [ ] Release **MV-DiT-18B** (based on *Wan-2.1-I2V-16B*)
+- [x] Release **MV-DiT-17B** (based on *Wan-2.1-I2V-16B*)
 - [ ] Release a Hugging Face Demo Space
 
 
@@ -65,34 +65,6 @@ we introduce 4D RoPE to recover the spatio-temporal relationships.
 To further improve the quality of generation and generalization,
 we use learnable unconditional tokens for motion classifier-free guidance.
 
-
-
-## 🎞️ Animation
-
-![Luffy Animation](./static/videos/luffy.gif)
-
-![Mona Lisa Animation](./static/videos/monalisa.gif)
-
-![Siren Animation](./static/videos/siren.gif)
-
-![Tanjianci Animation](./static/videos/tanjianci.gif)
-
-![Xiangsu New Animation](./static/videos/xiangsu.gif)
-
-![Daji Animation](./static/videos/daji.gif)
-
-![Spider Animation](./static/videos/spider.gif)
-
-![Jibuli Animation](./static/videos/jibuli.gif)
-
-![Niuzai Animation](./static/videos/niuzai.gif)
-
-![Human Animation](./static/videos/human.gif)
-
-![Dijia Animation](./static/videos/dijia.gif)
-
-![Iron Man Animation](./static/videos/iron-man.gif)
-
 ---
 
 ## 🛠️ Installation
@@ -113,53 +85,80 @@ pip install -r requirements.txt
 
 For models regarding:
 
-1. Download the NLF-Pose estimator we use (`nlf_l_multi.torchscript`) from the [NLF Release Page](https://github.com/isarandi/nlf/releases).
+1. **NLF-Pose Estimator**  
+   Download [`nlf_l_multi.torchscript`](https://github.com/isarandi/nlf/releases) from the NLF release page.
 
-2. Download the pretrained CogVideoX-5B checkpoint from [CogVideoX-5B on Hugging Face](https://huggingface.co/THUDM/CogVideoX-5b).
+2. **MV-DiT Backbone Models**  
+   - **MV-DiT-7B**: Download the [CogVideoX-5B checkpoint](https://huggingface.co/THUDM/CogVideoX-5b).  
+   - **MV-DiT-17B**: Download the [Wan-2-1 checkpoint](https://huggingface.co/alibaba-pai/Wan2.1-Fun-V1.1-14B-InP) and place it under the `wan2.1/` folder.
 
-3. Download our MV-DiT and 4DMoT checkpoint from  [MTVCrafter Checkpoints on Hugging Face](https://huggingface.co/yanboding/MTVCrafter).
+3. **MTVCrafter Checkpoints**  
+   Download the MV-DiT and 4DMoT checkpoints from [MTVCrafter on Hugging Face](https://huggingface.co/yanboding/MTVCrafter).
 
-
+---
 
 ## 🚀 Usage
 
-To animate a human image with a given 3D motion sequence,
-you first need to obtain the SMPL motion sequnces from the driven video:
+To animate a human image with a given 3D motion sequence,  
+you first need to prepare SMPL motion-video pairs. You can either:
+
+- Use the provided sample data: `data/sampled_data.pkl`, or  
+- Extract SMPL motion sequences from your own driving video using:
 
 ```bash
 python process_nlf.py "your_video_directory"
 ```
 
-Then, you can use the following command to animate the image guided by 4D motion tokens:
+This will generate a motion-video `.pkl` file under `"your_video_directory"`.
 
+---
+
+#### ▶️ Inference of MV-DiT-7B
 ```bash
-python infer.py --ref_image_path "ref_images/human.png" --motion_data_path "data/sample_data.pkl" --output_path "inference_output"
+python infer_7b.py \
+    --ref_image_path "ref_images/human.png" \
+    --motion_data_path "data/sampled_data.pkl" \
+    --output_path "inference_output"
 ```
 
-- `--ref_image_path`: Path to the image of reference character.
-- `--motion_data_path`: Path to the motion sequence (.pkl format).
-- `--output_path`: Where to save the generated animation results.
+#### ▶️ Inference of MV-DiT-7B (with text prompt)
+```bash
+python infer_7b.py \
+    --ref_image_path "ref_images/woman.png" \
+    --motion_data_path "data/sampled_data.pkl" \
+    --output_path "inference_output" \
+    --prompt "The woman is dancing on the beach, waves, sunset."
+```
 
-For our 4DMoT, you can run the following command to train the model on your dataset:
+**Arguments:**
+
+- `--ref_image_path`: Path to the reference character image.
+- `--motion_data_path`: Path to the SMPL motion sequence (.pkl format).
+- `--output_path`: Directory to save the generated video.
+- `--prompt` (optional): Text prompt describing the scene or style.
+
+---
+
+### 🏋️‍♂️ Training 4DMoT
+
+To train the 4DMoT tokenizer on your own dataset:
 
 ```bash
 accelerate launch train_vqvae.py
 ```
 
+---
 
 ## 📄 Citation
 
 If you find our work useful, please consider citing:
 
 ```bibtex
-@misc{ding2025mtvcrafter4dmotiontokenization,
-      title={MTVCrafter: 4D Motion Tokenization for Open-World Human Image Animation}, 
-      author={Yanbo Ding and Xirui Hu and Zhizhi Guo and Chi Zhang and Yali Wang},
-      year={2025},
-      eprint={2505.10238},
-      archivePrefix={arXiv},
-      primaryClass={cs.CV},
-      url={https://arxiv.org/abs/2505.10238}, 
+@article{ding2025mtvcrafter,
+  title={MTVCrafter: 4D Motion Tokenization for Open-World Human Image Animation},
+  author={Ding, Yanbo and Hu, Xirui and Guo, Zhizhi and Zhang, Chi and Wang, Yali},
+  journal={arXiv preprint arXiv:2505.10238},
+  year={2025}
 }
 ```
 
