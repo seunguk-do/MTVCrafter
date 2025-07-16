@@ -155,7 +155,7 @@ accelerate launch train_vqvae.py
 ---
 
 ## 💙 Acknowledgement
-MTVCrafter is built upon 
+MTVCrafter is largely built upon 
 [CogVideoX](https://github.com/THUDM/CogVideo), 
 [Wan-2-1-Fun](https://github.com/aigc-apps/VideoX-Fun).
 We sincerely acknowledge these open-source codes and models.
