@@ -17,7 +17,7 @@ from torchvision.transforms import ToPILImage, InterpolationMode
 from huggingface_hub import snapshot_download
 
 from dataset import SMPLDataset
-from models import MTVCrafterPipeline
+from models import MTVCrafterPipeline7B
 from models import VectorQuantizer, Encoder, Decoder, SMPL_VQVAE
 from draw_pose import get_pose_images
 
@@ -98,24 +98,27 @@ def get_new_height_width(data_dict, dst_height, dst_width):
 
 def inference(device, motion_data_path, ref_image_path='', output_dir='inference_output'):
     dst_width, dst_height = (512, 512)   # (480, 720) (720, 480)
-    num_frames = 49
+    num_frames = 49         # Number of frames per clip during training
+    guidance_scale = 3.0    # Classifier-free guidance scale for the motion tokens
     to_pil = ToPILImage()
     normalize = transforms.Normalize([0.5], [0.5])
     os.makedirs(output_dir, exist_ok=True)
 
+    # load data
     with open(motion_data_path, 'rb') as f:
         data_list = pickle.load(f)
     if not isinstance(data_list, list):
         data_list = [data_list]
     
-    pe_mean = np.load('data/mean.npy')
-    pe_std = np.load('data/std.npy')
+    # load dataset statistics
+    global_mean = np.load('data/mean.npy')
+    global_std = np.load('data/std.npy')
 
     # download the full repo (cached after the first download)
     base_dir = snapshot_download("yanboding/MTVCrafter")
     
     # load main pipeline
-    pipe = MTVCrafterPipeline.from_pretrained(
+    pipe = MTVCrafterPipeline7B.from_pretrained(
         model_path='THUDM/CogVideoX-5b',
         transformer_model_path=os.path.join(base_dir, "MV-DiT/CogVideoX"),
         torch_dtype=torch.bfloat16,
@@ -195,11 +198,8 @@ def inference(device, motion_data_path, ref_image_path='', output_dir='inference
             smpl_poses = np.array([pose[0][0].cpu().numpy() for pose in data['pose']['joints3d_nonparam']])
             poses = smpl_poses[sample_indexes]
         except:
-            poses = data['pose'][sample_indexes]
-        norm_poses = torch.tensor((poses - pe_mean) / pe_std)
-        # pose_min = np.min(poses, axis=(0, 1))    # (3,)
-        # pose_max = np.max(poses, axis=(0, 1))    # (3,)
-        # norm_poses = torch.tensor((poses - pose_min) / (pose_max - pose_min + 1e-6))
+            poses = data_dict['pose'][indices]
+        norm_poses = torch.tensor((poses - global_mean) / global_std)
 
         # draw control/recon images
         height, width = data['video_height'], data['video_width']
@@ -211,7 +211,7 @@ def inference(device, motion_data_path, ref_image_path='', output_dir='inference
         print(f"vq loss: {vq_loss}")    # a vq loss greater than 0.1 may indicate poor generation quality
         output_motion, _ =  vqvae(input_smpl_joints)
         # pose_images_after = get_pose_images(output_motion[0].cpu().detach() * (pose_max - pose_min + 1e-6) + pose_min, offset)
-        pose_images_after = get_pose_images(output_motion[0].cpu().detach() * pe_std + pe_mean, offset)
+        pose_images_after = get_pose_images(output_motion[0].cpu().detach() * global_std + global_mean, offset)
         pose_images_after = [image.resize((new_width, new_height)).crop((x1, y1, x1+dst_width, y1+dst_height)) for image in pose_images_after]
 
         # normalize images
@@ -221,7 +221,6 @@ def inference(device, motion_data_path, ref_image_path='', output_dir='inference
         ref_images = normalize(ref_images)
 
         # start inference
-        guidance_scale = 3.0
         output_images = pipe(
             height=dst_height,
             width=dst_width,
@@ -231,8 +230,8 @@ def inference(device, motion_data_path, ref_image_path='', output_dir='inference
             seed=6666,
             ref_images=ref_images,
             motion_embeds=motion_tokens,
-            joint_mean=pe_mean,
-            joint_std=pe_std,
+            joint_mean=global_mean,
+            joint_std=global_std,
         ).frames[0]
 
         # save result
@@ -243,7 +242,7 @@ def inference(device, motion_data_path, ref_image_path='', output_dir='inference
             vis_image = [to_pil(((ref_images[k] + 1) * 127.5).clamp(0, 255).to(torch.uint8)), to_pil(((input_images[k] + 1) * 127.5).clamp(0, 255).to(torch.uint8)), pose_images_before[k], pose_images_after[k], output_images[k]]
             vis_image = concat_images_grid(vis_image, cols=len(vis_image), pad=2)
             vis_images.append(vis_image)
-        imageio.mimsave(save_path, vis_images, fps=15)
+        imageio.mimsave(save_path, vis_images, fps=20)
         print(f"save data to {save_path}")
 
 
@@ -251,12 +250,11 @@ def main():
     import argparse
     parser = argparse.ArgumentParser()
     parser.add_argument('--ref_image_path', type=str, default="", required=False, help="path to the reference character image")
-    parser.add_argument('--motion_data_path', type=str, default="data/sample_data.pkl", required=False, help='path to the motion sequence')
-    parser.add_argument('--output_path', type=str, default="inference_output", required=False, help="where to save the generated video")
+    parser.add_argument('--motion_data_path', type=str, default="data/sampled_data.pkl", required=False, help='path to the motion sequence')
+    parser.add_argument('--output_dir', type=str, default="inference_output", required=False, help="where to save the generated video")
     
     args = parser.parse_args()
-    inference(device='cuda:0', motion_data_path=args.motion_data_path, ref_image_path=args.ref_image_path, output_dir=args.output_path)
-
+    inference(device='cuda:0', motion_data_path=args.motion_data_path, ref_image_path=args.ref_image_path, output_dir=args.output_dir)
 
 
 if __name__ == '__main__':
