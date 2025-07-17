@@ -305,7 +305,9 @@ def inference(device, motion_data_path, ref_image_path='', output_dir='inference
                             total_sample = sample
                             total_pixel_values = pixel_values
                             total_recon_control_pixel_values = recon_control_pixel_values
-                        total_ref_images = ref_image.repeat(1, video_length-overlap, 1, 1, 1)
+                            total_ref_images = ref_image.repeat(1, video_length, 1, 1, 1)
+                        else:
+                            total_ref_images = ref_image.repeat(1, video_length-overlap, 1, 1, 1)
                     elif clip_index != infer_num - 1:
                         total_sample = torch.cat([total_sample, sample[:,:,:-overlap]], dim=2)
                         total_pixel_values = torch.cat([total_pixel_values, pixel_values[:,:-overlap]], dim=1)
