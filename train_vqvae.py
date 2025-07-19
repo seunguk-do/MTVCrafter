@@ -215,7 +215,7 @@ if __name__ == '__main__':
 
     # prepare data
     if args.load_data_file != "":
-        dataset = SMPLDataset(load_data_file=args.load_data_file, num_frames=49)
+        dataset = SMPLDataset(load_data_file=args.load_data_file, num_frames=args.num_frames)
         if accelerator.is_main_process:
             logger.info('Global mean:\n {}'.format(dataset.global_mean))
             logger.info('Global std:\n {}'.format(dataset.global_std))
@@ -224,7 +224,7 @@ if __name__ == '__main__':
                 "std": dataset.global_std,
             }
     else:
-        dataset = SMPLDataset(data_root=args.data_root, num_frames=49)
+        dataset = SMPLDataset(data_root=args.data_root, num_frames=args.num_frames)
         if accelerator.is_main_process:
             logger.info('Global mean:\n {}'.format(dataset.global_mean))
             logger.info('Global std:\n {}'.format(dataset.global_std))
