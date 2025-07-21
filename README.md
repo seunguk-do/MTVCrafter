@@ -99,6 +99,7 @@ For models regarding:
    Download the enhanced LoRA for better performance of Wan2.1_I2V_14B:  
    [`Wan2.1_I2V_14B_FusionX_LoRA.safetensors`](https://huggingface.co/vrgamedevgirl84/Wan14BT2VFusioniX/blob/main/FusionX_LoRa/Wan2.1_I2V_14B_FusionX_LoRA.safetensors)  
    Place it under the `wan2.1/` folder.
+   
    Note that this LoRA is used to improve the inference speed and the details of generated video, but may occur worse motion accuracy.
 
 ---
