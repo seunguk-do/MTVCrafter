@@ -68,9 +68,13 @@ def retrieve_timesteps(
         second element is the number of inference steps.
     """
     if timesteps is not None and sigmas is not None:
-        raise ValueError("Only one of `timesteps` or `sigmas` can be passed. Please choose one to set custom values")
+        raise ValueError(
+            "Only one of `timesteps` or `sigmas` can be passed. Please choose one to set custom values"
+        )
     if timesteps is not None:
-        accepts_timesteps = "timesteps" in set(inspect.signature(scheduler.set_timesteps).parameters.keys())
+        accepts_timesteps = "timesteps" in set(
+            inspect.signature(scheduler.set_timesteps).parameters.keys()
+        )
         if not accepts_timesteps:
             raise ValueError(
                 f"The current scheduler class {scheduler.__class__}'s `set_timesteps` does not support custom"
@@ -80,7 +84,9 @@ def retrieve_timesteps(
         timesteps = scheduler.timesteps
         num_inference_steps = len(timesteps)
     elif sigmas is not None:
-        accept_sigmas = "sigmas" in set(inspect.signature(scheduler.set_timesteps).parameters.keys())
+        accept_sigmas = "sigmas" in set(
+            inspect.signature(scheduler.set_timesteps).parameters.keys()
+        )
         if not accept_sigmas:
             raise ValueError(
                 f"The current scheduler class {scheduler.__class__}'s `set_timesteps` does not support custom"
@@ -105,29 +111,28 @@ def resize_mask(mask, latent, process_first_frame_only=True):
         first_frame_resized = F.interpolate(
             mask[:, :, 0:1, :, :],
             size=target_size,
-            mode='trilinear',
-            align_corners=False
+            mode="trilinear",
+            align_corners=False,
         )
-        
+
         target_size = list(latent_size[2:])
         target_size[0] = target_size[0] - 1
         if target_size[0] != 0:
             remaining_frames_resized = F.interpolate(
                 mask[:, :, 1:, :, :],
                 size=target_size,
-                mode='trilinear',
-                align_corners=False
+                mode="trilinear",
+                align_corners=False,
             )
-            resized_mask = torch.cat([first_frame_resized, remaining_frames_resized], dim=2)
+            resized_mask = torch.cat(
+                [first_frame_resized, remaining_frames_resized], dim=2
+            )
         else:
             resized_mask = first_frame_resized
     else:
         target_size = list(latent_size[2:])
         resized_mask = F.interpolate(
-            mask,
-            size=target_size,
-            mode='trilinear',
-            align_corners=False
+            mask, size=target_size, mode="trilinear", align_corners=False
         )
     return resized_mask
 
@@ -176,13 +181,25 @@ class MTVCrafterPipeline17B(DiffusionPipeline):
         super().__init__()
 
         self.register_modules(
-            tokenizer=tokenizer, text_encoder=text_encoder, vae=vae, transformer=transformer, clip_image_encoder=clip_image_encoder, scheduler=scheduler
+            tokenizer=tokenizer,
+            text_encoder=text_encoder,
+            vae=vae,
+            transformer=transformer,
+            clip_image_encoder=clip_image_encoder,
+            scheduler=scheduler,
         )
 
-        self.video_processor = VideoProcessor(vae_scale_factor=self.vae.spacial_compression_ratio)
-        self.image_processor = VaeImageProcessor(vae_scale_factor=self.vae.spacial_compression_ratio)
+        self.video_processor = VideoProcessor(
+            vae_scale_factor=self.vae.spacial_compression_ratio
+        )
+        self.image_processor = VaeImageProcessor(
+            vae_scale_factor=self.vae.spacial_compression_ratio
+        )
         self.mask_processor = VaeImageProcessor(
-            vae_scale_factor=self.vae.spacial_compression_ratio, do_normalize=False, do_binarize=True, do_convert_grayscale=True
+            vae_scale_factor=self.vae.spacial_compression_ratio,
+            do_normalize=False,
+            do_binarize=True,
+            do_convert_grayscale=True,
         )
 
     def _get_t5_prompt_embeds(
@@ -209,23 +226,33 @@ class MTVCrafterPipeline17B(DiffusionPipeline):
         )
         text_input_ids = text_inputs.input_ids
         prompt_attention_mask = text_inputs.attention_mask
-        untruncated_ids = self.tokenizer(prompt, padding="longest", return_tensors="pt").input_ids
+        untruncated_ids = self.tokenizer(
+            prompt, padding="longest", return_tensors="pt"
+        ).input_ids
 
-        if untruncated_ids.shape[-1] >= text_input_ids.shape[-1] and not torch.equal(text_input_ids, untruncated_ids):
-            removed_text = self.tokenizer.batch_decode(untruncated_ids[:, max_sequence_length - 1 : -1])
+        if untruncated_ids.shape[-1] >= text_input_ids.shape[-1] and not torch.equal(
+            text_input_ids, untruncated_ids
+        ):
+            removed_text = self.tokenizer.batch_decode(
+                untruncated_ids[:, max_sequence_length - 1 : -1]
+            )
             logger.warning(
                 "The following part of your input was truncated because `max_sequence_length` is set to "
                 f" {max_sequence_length} tokens: {removed_text}"
             )
 
         seq_lens = prompt_attention_mask.gt(0).sum(dim=1).long()
-        prompt_embeds = self.text_encoder(text_input_ids.to(device), attention_mask=prompt_attention_mask.to(device))[0]
+        prompt_embeds = self.text_encoder(
+            text_input_ids.to(device), attention_mask=prompt_attention_mask.to(device)
+        )[0]
         prompt_embeds = prompt_embeds.to(dtype=dtype, device=device)
 
         # duplicate text embeddings for each generation per prompt, using mps friendly method
         _, seq_len, _ = prompt_embeds.shape
         prompt_embeds = prompt_embeds.repeat(1, num_videos_per_prompt, 1)
-        prompt_embeds = prompt_embeds.view(batch_size * num_videos_per_prompt, seq_len, -1)
+        prompt_embeds = prompt_embeds.view(
+            batch_size * num_videos_per_prompt, seq_len, -1
+        )
 
         return [u[:v] for u, v in zip(prompt_embeds, seq_lens)]
 
@@ -286,7 +313,11 @@ class MTVCrafterPipeline17B(DiffusionPipeline):
 
         if do_classifier_free_guidance and negative_prompt_embeds is None:
             negative_prompt = negative_prompt or ""
-            negative_prompt = batch_size * [negative_prompt] if isinstance(negative_prompt, str) else negative_prompt
+            negative_prompt = (
+                batch_size * [negative_prompt]
+                if isinstance(negative_prompt, str)
+                else negative_prompt
+            )
 
             if prompt is not None and type(prompt) is not type(negative_prompt):
                 raise TypeError(
@@ -311,7 +342,16 @@ class MTVCrafterPipeline17B(DiffusionPipeline):
         return prompt_embeds, negative_prompt_embeds
 
     def prepare_latents(
-        self, batch_size, num_channels_latents, num_frames, height, width, dtype, device, generator, latents=None
+        self,
+        batch_size,
+        num_channels_latents,
+        num_frames,
+        height,
+        width,
+        dtype,
+        device,
+        generator,
+        latents=None,
     ):
         if isinstance(generator, list) and len(generator) != batch_size:
             raise ValueError(
@@ -328,7 +368,9 @@ class MTVCrafterPipeline17B(DiffusionPipeline):
         )
 
         if latents is None:
-            latents = randn_tensor(shape, generator=generator, device=device, dtype=dtype)
+            latents = randn_tensor(
+                shape, generator=generator, device=device, dtype=dtype
+            )
         else:
             latents = latents.to(device)
 
@@ -337,9 +379,17 @@ class MTVCrafterPipeline17B(DiffusionPipeline):
             latents = latents * self.scheduler.init_noise_sigma
         return latents
 
-
     def prepare_control_latents(
-        self, control, control_image, batch_size, height, width, dtype, device, generator, do_classifier_free_guidance
+        self,
+        control,
+        control_image,
+        batch_size,
+        height,
+        width,
+        dtype,
+        device,
+        generator,
+        do_classifier_free_guidance,
     ):
         # resize the control to latents shape as we concatenate the control to the latents
         # we do that before converting to dtype to avoid breaking in case we're using cpu_offload
@@ -354,7 +404,7 @@ class MTVCrafterPipeline17B(DiffusionPipeline):
                 control_bs = self.vae.encode(control_bs)[0]
                 control_bs = control_bs.mode()
                 new_control.append(control_bs)
-            control = torch.cat(new_control, dim = 0)
+            control = torch.cat(new_control, dim=0)
 
         if control_image is not None:
             control_image = control_image.to(device=device, dtype=dtype)
@@ -365,15 +415,24 @@ class MTVCrafterPipeline17B(DiffusionPipeline):
                 control_pixel_values_bs = self.vae.encode(control_pixel_values_bs)[0]
                 control_pixel_values_bs = control_pixel_values_bs.mode()
                 new_control_pixel_values.append(control_pixel_values_bs)
-            control_image_latents = torch.cat(new_control_pixel_values, dim = 0)
+            control_image_latents = torch.cat(new_control_pixel_values, dim=0)
         else:
             control_image_latents = None
 
         return control, control_image_latents
-    
 
     def prepare_mask_latents(
-        self, mask, masked_image, batch_size, height, width, dtype, device, generator, do_classifier_free_guidance, noise_aug_strength
+        self,
+        mask,
+        masked_image,
+        batch_size,
+        height,
+        width,
+        dtype,
+        device,
+        generator,
+        do_classifier_free_guidance,
+        noise_aug_strength,
     ):
         # resize the mask to latents shape as we concatenate the mask to the latents
         # we do that before converting to dtype to avoid breaking in case we're using cpu_offload
@@ -388,7 +447,7 @@ class MTVCrafterPipeline17B(DiffusionPipeline):
                 mask_bs = self.vae.encode(mask_bs)[0]
                 mask_bs = mask_bs.mode()
                 new_mask.append(mask_bs)
-            mask = torch.cat(new_mask, dim = 0)
+            mask = torch.cat(new_mask, dim=0)
             # mask = mask * self.vae.config.scaling_factor
 
         if masked_image is not None:
@@ -400,7 +459,7 @@ class MTVCrafterPipeline17B(DiffusionPipeline):
                 mask_pixel_values_bs = self.vae.encode(mask_pixel_values_bs)[0]
                 mask_pixel_values_bs = mask_pixel_values_bs.mode()
                 new_mask_pixel_values.append(mask_pixel_values_bs)
-            masked_image_latents = torch.cat(new_mask_pixel_values, dim = 0)
+            masked_image_latents = torch.cat(new_mask_pixel_values, dim=0)
             # masked_image_latents = masked_image_latents * self.vae.config.scaling_factor
         else:
             masked_image_latents = None
@@ -421,13 +480,17 @@ class MTVCrafterPipeline17B(DiffusionPipeline):
         # eta corresponds to η in DDIM paper: https://arxiv.org/abs/2010.02502
         # and should be between [0, 1]
 
-        accepts_eta = "eta" in set(inspect.signature(self.scheduler.step).parameters.keys())
+        accepts_eta = "eta" in set(
+            inspect.signature(self.scheduler.step).parameters.keys()
+        )
         extra_step_kwargs = {}
         if accepts_eta:
             extra_step_kwargs["eta"] = eta
 
         # check if the scheduler accepts generator
-        accepts_generator = "generator" in set(inspect.signature(self.scheduler.step).parameters.keys())
+        accepts_generator = "generator" in set(
+            inspect.signature(self.scheduler.step).parameters.keys()
+        )
         if accepts_generator:
             extra_step_kwargs["generator"] = generator
         return extra_step_kwargs
@@ -444,10 +507,13 @@ class MTVCrafterPipeline17B(DiffusionPipeline):
         negative_prompt_embeds=None,
     ):
         if height % 8 != 0 or width % 8 != 0:
-            raise ValueError(f"`height` and `width` have to be divisible by 8 but are {height} and {width}.")
+            raise ValueError(
+                f"`height` and `width` have to be divisible by 8 but are {height} and {width}."
+            )
 
         if callback_on_step_end_tensor_inputs is not None and not all(
-            k in self._callback_tensor_inputs for k in callback_on_step_end_tensor_inputs
+            k in self._callback_tensor_inputs
+            for k in callback_on_step_end_tensor_inputs
         ):
             raise ValueError(
                 f"`callback_on_step_end_tensor_inputs` has to be in {self._callback_tensor_inputs}, but found {[k for k in callback_on_step_end_tensor_inputs if k not in self._callback_tensor_inputs]}"
@@ -461,8 +527,12 @@ class MTVCrafterPipeline17B(DiffusionPipeline):
             raise ValueError(
                 "Provide either `prompt` or `prompt_embeds`. Cannot leave both `prompt` and `prompt_embeds` undefined."
             )
-        elif prompt is not None and (not isinstance(prompt, str) and not isinstance(prompt, list)):
-            raise ValueError(f"`prompt` has to be of type `str` or `list` but is {type(prompt)}")
+        elif prompt is not None and (
+            not isinstance(prompt, str) and not isinstance(prompt, list)
+        ):
+            raise ValueError(
+                f"`prompt` has to be of type `str` or `list` but is {type(prompt)}"
+            )
 
         if prompt is not None and negative_prompt_embeds is not None:
             raise ValueError(
@@ -524,7 +594,11 @@ class MTVCrafterPipeline17B(DiffusionPipeline):
         output_type: str = "numpy",
         return_dict: bool = False,
         callback_on_step_end: Optional[
-            Union[Callable[[int, int, Dict], None], PipelineCallback, MultiPipelineCallbacks]
+            Union[
+                Callable[[int, int, Dict], None],
+                PipelineCallback,
+                MultiPipelineCallbacks,
+            ]
         ] = None,
         attention_kwargs: Optional[Dict[str, Any]] = None,
         callback_on_step_end_tensor_inputs: List[str] = ["latents"],
@@ -537,7 +611,7 @@ class MTVCrafterPipeline17B(DiffusionPipeline):
         comfyui_progressbar: bool = False,
         use_2d: bool = False,
         previous_sample: Union[torch.FloatTensor] = None,
-        lora_path: str = "", 
+        lora_path: str = "",
         use_first_clip_image: bool = False,
         overlap: int = 9,
     ) -> Union[MTVCrafterPipelineOutput, Tuple]:
@@ -600,12 +674,17 @@ class MTVCrafterPipeline17B(DiffusionPipeline):
 
         # 4. Prepare timesteps
         if isinstance(self.scheduler, FlowMatchEulerDiscreteScheduler):
-            timesteps, num_inference_steps = retrieve_timesteps(self.scheduler, num_inference_steps, device, timesteps, mu=1)
+            timesteps, num_inference_steps = retrieve_timesteps(
+                self.scheduler, num_inference_steps, device, timesteps, mu=1
+            )
         else:
-            timesteps, num_inference_steps = retrieve_timesteps(self.scheduler, num_inference_steps, device, timesteps)
+            timesteps, num_inference_steps = retrieve_timesteps(
+                self.scheduler, num_inference_steps, device, timesteps
+            )
         self._num_timesteps = len(timesteps)
         if comfyui_progressbar:
             from comfy.utils import ProgressBar
+
             pbar = ProgressBar(num_inference_steps + 2)
 
         # 5. Prepare latents.
@@ -632,8 +711,12 @@ class MTVCrafterPipeline17B(DiffusionPipeline):
         # Prepare mask latent variables
         if init_video is not None and mask is not None:
             bs, _, video_length, height, width = video.size()
-            mask_condition = rearrange(mask.to(dtype=torch.float32), "b f c h w -> b c f h w")
-            masked_video = rearrange(mask_video.to(dtype=torch.float32), "b f c h w -> b c f h w")
+            mask_condition = rearrange(
+                mask.to(dtype=torch.float32), "b f c h w -> b c f h w"
+            )
+            masked_video = rearrange(
+                mask_video.to(dtype=torch.float32), "b f c h w -> b c f h w"
+            )
             _, masked_video_latents = self.prepare_mask_latents(
                 None,
                 masked_video,
@@ -646,24 +729,39 @@ class MTVCrafterPipeline17B(DiffusionPipeline):
                 do_classifier_free_guidance,
                 noise_aug_strength=None,
             )
-            
+
             mask_condition = torch.concat(
                 [
-                    torch.repeat_interleave(mask_condition[:, :, 0:1], repeats=4, dim=2), 
-                    mask_condition[:, :, 1:]
-                ], dim=2
+                    torch.repeat_interleave(
+                        mask_condition[:, :, 0:1], repeats=4, dim=2
+                    ),
+                    mask_condition[:, :, 1:],
+                ],
+                dim=2,
             )
-            mask_condition = mask_condition.view(bs, mask_condition.shape[2] // 4, 4, height, width)
+            mask_condition = mask_condition.view(
+                bs, mask_condition.shape[2] // 4, 4, height, width
+            )
             mask_condition = mask_condition.transpose(1, 2)
-            mask_latents = resize_mask(1 - mask_condition, masked_video_latents, True).to(device, weight_dtype)
+            mask_latents = resize_mask(
+                1 - mask_condition, masked_video_latents, True
+            ).to(device, weight_dtype)
 
-            mask_input = torch.cat([mask_latents] * 2) if do_classifier_free_guidance else mask_latents
+            mask_input = (
+                torch.cat([mask_latents] * 2)
+                if do_classifier_free_guidance
+                else mask_latents
+            )
             masked_video_latents_input = (
-                torch.cat([masked_video_latents] * 2) if do_classifier_free_guidance else masked_video_latents
+                torch.cat([masked_video_latents] * 2)
+                if do_classifier_free_guidance
+                else masked_video_latents
             )
 
-            y = torch.cat([mask_input, masked_video_latents_input], dim=1).to(device, weight_dtype) 
-        
+            y = torch.cat([mask_input, masked_video_latents_input], dim=1).to(
+                device, weight_dtype
+            )
+
         if use_2d and control_video is not None:
             control_video = control_video.to(dtype=torch.float32)
             control_video = rearrange(control_video, "b f c h w -> b c f h w")
@@ -676,17 +774,19 @@ class MTVCrafterPipeline17B(DiffusionPipeline):
                 weight_dtype,
                 device,
                 generator,
-                do_classifier_free_guidance
+                do_classifier_free_guidance,
             )[1]
             control_latents = (
-                torch.cat([control_video_latents] * 2) if do_classifier_free_guidance else control_video_latents
+                torch.cat([control_video_latents] * 2)
+                if do_classifier_free_guidance
+                else control_video_latents
             ).to(device, weight_dtype)
         else:
             control_latents = None
 
             # if ref_image is not None:
             #     ref_image = rearrange(ref_image, "b f c h w -> b c f h w")
-                
+
             #     ref_image_latentes = self.prepare_control_latents(
             #         None,
             #         ref_image,
@@ -709,17 +809,25 @@ class MTVCrafterPipeline17B(DiffusionPipeline):
 
         # Prepare clip latent variables
         if clip_image is not None:
-            clip_image = TF.to_tensor(clip_image).sub_(0.5).div_(0.5).to(device, weight_dtype) 
+            clip_image = (
+                TF.to_tensor(clip_image).sub_(0.5).div_(0.5).to(device, weight_dtype)
+            )
             clip_context = self.clip_image_encoder([clip_image[:, None, :, :]])
             clip_context = (
-                torch.cat([clip_context] * 2) if do_classifier_free_guidance else clip_context
+                torch.cat([clip_context] * 2)
+                if do_classifier_free_guidance
+                else clip_context
             )
         else:
-            clip_image = Image.new("RGB", (512, 512), color=(0, 0, 0))  
-            clip_image = TF.to_tensor(clip_image).sub_(0.5).div_(0.5).to(device, weight_dtype) 
+            clip_image = Image.new("RGB", (512, 512), color=(0, 0, 0))
+            clip_image = (
+                TF.to_tensor(clip_image).sub_(0.5).div_(0.5).to(device, weight_dtype)
+            )
             clip_context = self.clip_image_encoder([clip_image[:, None, :, :]])
             clip_context = (
-                torch.cat([clip_context] * 2) if do_classifier_free_guidance else clip_context
+                torch.cat([clip_context] * 2)
+                if do_classifier_free_guidance
+                else clip_context
             )
             clip_context = torch.zeros_like(clip_context)
         if comfyui_progressbar:
@@ -730,23 +838,30 @@ class MTVCrafterPipeline17B(DiffusionPipeline):
 
         ######################## long video infer ###########################
         if previous_sample is not None:
+
             def add_noise(
-                    original_samples: torch.FloatTensor,
-                    noise: torch.FloatTensor,
-                    timesteps: torch.IntTensor,
-                ) -> torch.FloatTensor:
-                    """
-                    compatible with diffusers add_noise()
-                    """
-                    timesteps = timesteps.float() / 1000
-                    timesteps = timesteps.view(timesteps.shape + (1,) * (len(noise.shape)-1))
+                original_samples: torch.FloatTensor,
+                noise: torch.FloatTensor,
+                timesteps: torch.IntTensor,
+            ) -> torch.FloatTensor:
+                """
+                compatible with diffusers add_noise()
+                """
+                timesteps = timesteps.float() / 1000
+                timesteps = timesteps.view(
+                    timesteps.shape + (1,) * (len(noise.shape) - 1)
+                )
 
-                    return (1 - timesteps) * original_samples + timesteps * noise
+                return (1 - timesteps) * original_samples + timesteps * noise
 
-            repeat_tensor = previous_sample[:,:,overlap-1:overlap,:,:].repeat(1, 1, num_frames - overlap, 1, 1)
-            input_video = torch.cat([previous_sample, repeat_tensor],dim=2).to(device, weight_dtype) 
+            repeat_tensor = previous_sample[:, :, overlap - 1 : overlap, :, :].repeat(
+                1, 1, num_frames - overlap, 1, 1
+            )
+            input_video = torch.cat([previous_sample, repeat_tensor], dim=2).to(
+                device, weight_dtype
+            )
             input_video = input_video * 2 - 1
-            input_video[:,:,overlap:,:,:] = 0
+            input_video[:, :, overlap:, :, :] = 0
             _, masked_video_latents = self.prepare_mask_latents(
                 None,
                 input_video,
@@ -759,35 +874,51 @@ class MTVCrafterPipeline17B(DiffusionPipeline):
                 do_classifier_free_guidance,
                 noise_aug_strength=None,
             )
-            
+
             # clip image
             if not use_first_clip_image:
-                clip_image = input_video[:,:,overlap-1:overlap,:,:]
+                clip_image = input_video[:, :, overlap - 1 : overlap, :, :]
                 clip_context = self.clip_image_encoder([clip_image[0]])
-                clip_context = (
-                    torch.cat([clip_context] * 2)
-                )
+                clip_context = torch.cat([clip_context] * 2)
             vae_latent_num = (overlap - 1) // 4 + 1
             y[:, 0:4, :vae_latent_num] = 1
             y[:, 4:] = masked_video_latents
         ######################## long video infer ###########################
 
-        target_shape = (self.vae.latent_channels, (num_frames - 1) // self.vae.temporal_compression_ratio + 1, width // self.vae.spacial_compression_ratio, height // self.vae.spacial_compression_ratio)
-        seq_len = math.ceil((target_shape[2] * target_shape[3]) / (self.transformer.config.patch_size[1] * self.transformer.config.patch_size[2]) * target_shape[1]) 
+        target_shape = (
+            self.vae.latent_channels,
+            (num_frames - 1) // self.vae.temporal_compression_ratio + 1,
+            width // self.vae.spacial_compression_ratio,
+            height // self.vae.spacial_compression_ratio,
+        )
+        seq_len = math.ceil(
+            (target_shape[2] * target_shape[3])
+            / (
+                self.transformer.config.patch_size[1]
+                * self.transformer.config.patch_size[2]
+            )
+            * target_shape[1]
+        )
         # 7. Denoising loop
-        num_warmup_steps = max(len(timesteps) - num_inference_steps * self.scheduler.order, 0)
+        num_warmup_steps = max(
+            len(timesteps) - num_inference_steps * self.scheduler.order, 0
+        )
         with self.progress_bar(total=num_inference_steps) as progress_bar:
             for i, t in enumerate(timesteps):
                 if self.interrupt:
                     continue
 
-                latent_model_input = torch.cat([latents] * 2) if do_classifier_free_guidance else latents
+                latent_model_input = (
+                    torch.cat([latents] * 2) if do_classifier_free_guidance else latents
+                )
                 if hasattr(self.scheduler, "scale_model_input"):
-                    latent_model_input = self.scheduler.scale_model_input(latent_model_input, t)
+                    latent_model_input = self.scheduler.scale_model_input(
+                        latent_model_input, t
+                    )
 
                 # broadcast to batch dimension in a way that's compatible with ONNX/Core ML
                 timestep = t.expand(latent_model_input.shape[0])
-                
+
                 # predict noise model_output
                 with torch.cuda.amp.autocast(dtype=weight_dtype):
                     if lora_path == "" and do_classifier_free_guidance:
@@ -799,8 +930,10 @@ class MTVCrafterPipeline17B(DiffusionPipeline):
                             y=y,
                             clip_fea=clip_context,
                             control_latents=control_latents,
-                            motion_tokens=torch.cat([motion_tokens, motion_tokens], dim=0),
-                            motion_rotary_emb=motion_rotary_emb
+                            motion_tokens=torch.cat(
+                                [motion_tokens, motion_tokens], dim=0
+                            ),
+                            motion_rotary_emb=motion_rotary_emb,
                         )
                     else:
                         noise_pred = self.transformer(
@@ -812,25 +945,41 @@ class MTVCrafterPipeline17B(DiffusionPipeline):
                             clip_fea=clip_context[1:2],
                             control_latents=control_latents,
                             motion_tokens=motion_tokens,
-                            motion_rotary_emb=motion_rotary_emb
+                            motion_rotary_emb=motion_rotary_emb,
                         )
 
                 # perform guidance
                 if do_classifier_free_guidance and lora_path == "":
                     noise_pred_uncond, noise_pred_text = noise_pred.chunk(2)
-                    noise_pred = noise_pred_uncond + self.guidance_scale * (noise_pred_text - noise_pred_uncond)
+                    noise_pred = noise_pred_uncond + self.guidance_scale * (
+                        noise_pred_text - noise_pred_uncond
+                    )
 
                 # compute the previous noisy sample x_t -> x_t-1
-                latents = self.scheduler.step(noise_pred, t, latents, **extra_step_kwargs, return_dict=False)[0]
+                latents = self.scheduler.step(
+                    noise_pred, t, latents, **extra_step_kwargs, return_dict=False
+                )[0]
 
                 ######################## long video infer ###########################
                 if previous_sample is not None:
-                    masked_video_latents = masked_video_latents.to(latents.dtype).to(self.device)
-                    motion_add_noise = torch.randn_like(masked_video_latents[:,:,:vae_latent_num]).contiguous()
+                    masked_video_latents = masked_video_latents.to(latents.dtype).to(
+                        self.device
+                    )
+                    motion_add_noise = torch.randn_like(
+                        masked_video_latents[:, :, :vae_latent_num]
+                    ).contiguous()
                     if i < len(timesteps) - 1:
-                        add_latent = add_noise(masked_video_latents[:,:,:vae_latent_num], motion_add_noise, timesteps[i+1])
+                        add_latent = add_noise(
+                            masked_video_latents[:, :, :vae_latent_num],
+                            motion_add_noise,
+                            timesteps[i + 1],
+                        )
                     else:
-                        add_latent = add_noise(masked_video_latents[:,:,:vae_latent_num], motion_add_noise, torch.zeros_like(timesteps[i]))
+                        add_latent = add_noise(
+                            masked_video_latents[:, :, :vae_latent_num],
+                            motion_add_noise,
+                            torch.zeros_like(timesteps[i]),
+                        )
                     _, _, T_m, _, _ = add_latent.shape
                     latents[:, :, :T_m] = add_latent
                 ######################## long video infer ###########################
@@ -843,9 +992,13 @@ class MTVCrafterPipeline17B(DiffusionPipeline):
 
                     latents = callback_outputs.pop("latents", latents)
                     prompt_embeds = callback_outputs.pop("prompt_embeds", prompt_embeds)
-                    negative_prompt_embeds = callback_outputs.pop("negative_prompt_embeds", negative_prompt_embeds)
-                    
-                if i == len(timesteps) - 1 or ((i + 1) > num_warmup_steps and (i + 1) % self.scheduler.order == 0):
+                    negative_prompt_embeds = callback_outputs.pop(
+                        "negative_prompt_embeds", negative_prompt_embeds
+                    )
+
+                if i == len(timesteps) - 1 or (
+                    (i + 1) > num_warmup_steps and (i + 1) % self.scheduler.order == 0
+                ):
                     progress_bar.update()
                 if comfyui_progressbar:
                     pbar.update(1)
@@ -854,7 +1007,9 @@ class MTVCrafterPipeline17B(DiffusionPipeline):
             video = self.decode_latents(latents)
         elif not output_type == "latent":
             video = self.decode_latents(latents)
-            video = self.video_processor.postprocess_video(video=video, output_type=output_type)
+            video = self.video_processor.postprocess_video(
+                video=video, output_type=output_type
+            )
         else:
             video = latents
 
@@ -865,3 +1020,4 @@ class MTVCrafterPipeline17B(DiffusionPipeline):
             video = torch.from_numpy(video)
 
         return MTVCrafterPipelineOutput(videos=video)
+

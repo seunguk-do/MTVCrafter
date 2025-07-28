@@ -5,10 +5,12 @@ from loguru import logger
 import gc
 from functools import lru_cache
 
+
 @lru_cache(maxsize=None)
 def GET_DTYPE():
     RUNNING_FLAG = os.getenv("DTYPE")
     return RUNNING_FLAG
+
 
 class WanLoraWrapper:
     def __init__(self, wan_model):
@@ -31,7 +33,9 @@ class WanLoraWrapper:
 
     def _load_lora_file(self, file_path):
         with safe_open(file_path, framework="pt") as f:
-            tensor_dict = {key: f.get_tensor(key).to(torch.bfloat16) for key in f.keys()}
+            tensor_dict = {
+                key: f.get_tensor(key).to(torch.bfloat16) for key in f.keys()
+            }
         return tensor_dict
 
     def apply_lora(self, lora_name, alpha=1.0):
@@ -47,7 +51,6 @@ class WanLoraWrapper:
         for k, v in self.model.named_parameters():
             self.model.original_weight_dict[k] = v
 
-
         lora_weights = self._load_lora_file(self.lora_metadata[lora_name]["path"])
         weight_dict = self.model.original_weight_dict
         self._apply_lora_weights(weight_dict, lora_weights, alpha)
@@ -55,7 +58,6 @@ class WanLoraWrapper:
 
         logger.info(f"Applied LoRA: {lora_name} with alpha={alpha}")
         return True
-
 
     @torch.no_grad()
     def _apply_lora_weights(self, weight_dict, lora_weights, alpha):
@@ -70,10 +72,10 @@ class WanLoraWrapper:
                     lora_pairs[base_name] = (key, b_key)
             elif key.endswith("diff_b") and key.startswith(prefix):
                 base_name = key[len(prefix) :].replace("diff_b", "bias")
-                lora_pairs[base_name] = (key)
+                lora_pairs[base_name] = key
             elif key.endswith("diff") and key.startswith(prefix):
                 base_name = key[len(prefix) :].replace("diff", "weight")
-                lora_pairs[base_name] = (key)
+                lora_pairs[base_name] = key
 
         applied_count = 0
         for name, param in weight_dict.items():
@@ -81,7 +83,7 @@ class WanLoraWrapper:
                 if name not in self.override_dict:
                     self.override_dict[name] = param.detach().clone().cpu()
 
-                if len(lora_pairs[name])==2:
+                if len(lora_pairs[name]) == 2:
                     name_lora_A, name_lora_B = lora_pairs[name]
                     lora_A = lora_weights[name_lora_A].to(param.device, param.dtype)
                     lora_B = lora_weights[name_lora_B].to(param.device, param.dtype)
@@ -89,10 +91,9 @@ class WanLoraWrapper:
                     param.add_(delta)
                 else:
                     name_lora = lora_pairs[name]
-                    delta = lora_weights[name_lora]* alpha
+                    delta = lora_weights[name_lora] * alpha
                     param.add_(delta.to(param.device, param.dtype))
                 applied_count += 1
-
 
         logger.info(f"Applied {applied_count} LoRA weight adjustments")
         if applied_count == 0:
@@ -100,9 +101,9 @@ class WanLoraWrapper:
                 "Warning: No LoRA weights were applied. Expected naming conventions: 'diffusion_model.<layer_name>.lora_A.weight' and 'diffusion_model.<layer_name>.lora_B.weight'. Please verify the LoRA weight file."
             )
 
-
     def list_loaded_loras(self):
         return list(self.lora_metadata.keys())
 
     def get_current_lora(self):
         return self.model.current_lora
+
