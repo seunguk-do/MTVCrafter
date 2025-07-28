@@ -49,7 +49,7 @@ process-motion-videos:
 animate-bogum:
 	$(MAKE) run -- python scripts/infer_7b.py \
 		--ref-image-path ${DATA_DIR}/ref_images/bogum.jpg \
-		--motion-data-path ${DATA_DIR}/motion_videos_smpl/artistic_gymnastics.pkl \
+		--motion-data-dir ${DATA_DIR}/motion_videos_smpl \
 		--output-path ${DATA_DIR}/results/
 
 

@@ -1,9 +1,11 @@
 import os
 import sys
 import copy
-import torch
 import random
 import pickle
+from pathlib import Path
+
+import torch
 import decord
 import imageio
 import numpy as np
@@ -109,7 +111,7 @@ def get_new_height_width(data_dict, dst_height, dst_width):
 
 
 def inference(
-    device, motion_data_path, ref_image_path="", output_dir="inference_output"
+    device, motion_data_dir, ref_image_path="", output_dir="inference_output"
 ):
     dst_width, dst_height = (512, 512)  # (480, 720) (720, 480)
     num_frames = 49  # Number of frames per clip during training
@@ -118,11 +120,14 @@ def inference(
     normalize = transforms.Normalize([0.5], [0.5])
     os.makedirs(output_dir, exist_ok=True)
 
-    # load data
-    with open(motion_data_path, "rb") as f:
-        data_list = pickle.load(f)
-    if not isinstance(data_list, list):
-        data_list = [data_list]
+    data_list_list = []
+    for p in Path(motion_data_dir).glob("*.pkl"):
+        # load data
+        with open(p, "rb") as f:
+            data_list = pickle.load(f)
+        if not isinstance(data_list, list):
+            data_list = [data_list]
+        data_list_list.append(data_list)
 
     # load dataset statistics
     global_mean = np.load("data/mean.npy")
@@ -166,149 +171,158 @@ def inference(
     vqvae = SMPL_VQVAE(motion_encoder, motion_decoder, motion_quant).to(device)
     print(vqvae.load_state_dict(state_dict["module"], strict=True))
 
-    # inference loop
-    for index, data in enumerate(data_list):
-        # ceter cropping
-        new_height, new_width = get_new_height_width(data, dst_height, dst_width)
-        x1 = (new_width - dst_width) // 2
-        y1 = (new_height - dst_height) // 2
+    for data_list in data_list_list:
+        # inference loop
+        for index, data in enumerate(data_list):
+            # ceter cropping
+            new_height, new_width = get_new_height_width(data, dst_height, dst_width)
+            x1 = (new_width - dst_width) // 2
+            y1 = (new_height - dst_height) // 2
 
-        # sampling frames
-        sample_indexes = get_sample_indexes(data["video_length"], num_frames, stride=1)
-        print("sample_indexes:", sample_indexes)
+            # sampling frames
+            sample_indexes = get_sample_indexes(
+                data["video_length"], num_frames, stride=1
+            )
+            print("sample_indexes:", sample_indexes)
 
-        # read control video - skip if video doesn't exist
-        try:
-            input_images = sample_video(
-                decord.VideoReader(data["video_path"]), sample_indexes, method=2
-            )
-            input_images = (
-                torch.from_numpy(input_images).permute(0, 3, 1, 2).contiguous()
-            )
-            input_images = F.resize(
-                input_images, (new_height, new_width), InterpolationMode.BILINEAR
-            )
-            input_images = F.crop(input_images, y1, x1, dst_height, dst_width)
-        except (RuntimeError, FileNotFoundError):
-            print(
-                f"Warning: Could not read video at {data['video_path']}. Creating blank frames."
-            )
-            # Create blank frames if video doesn't exist
-            input_images = torch.zeros((num_frames, 3, dst_height, dst_width))
-
-        # read reference character image
-        if ref_image_path != "":
-            if os.path.isdir(ref_image_path):
-                print(f"Error: '{ref_image_path}' is a directory, not an image file.")
-                print(
-                    f"Please specify a specific image file, e.g., --ref_image_path {ref_image_path}/human.png"
+            # read control video - skip if video doesn't exist
+            try:
+                input_images = sample_video(
+                    decord.VideoReader(data["video_path"]), sample_indexes, method=2
                 )
-                sys.exit(1)
-            elif not os.path.exists(ref_image_path):
-                print(f"Error: Reference image file '{ref_image_path}' does not exist.")
-                sys.exit(1)
-            ref_image = Image.open(ref_image_path).convert("RGB")
-            ref_image = (
-                torch.from_numpy(np.array(ref_image)).permute(2, 0, 1).contiguous()
-            )
-            ref_images = torch.stack([ref_image.clone() for _ in range(num_frames)])
-            ref_images = F.resize(
-                ref_images, (new_height, new_width), InterpolationMode.BILINEAR
-            )
-            ref_images = F.crop(ref_images, y1, x1, dst_height, dst_width)
-        else:
-            ref_images = copy.deepcopy(input_images)
-            frame0 = input_images[0]
-            ref_images[:, :, :, :] = frame0
+                input_images = (
+                    torch.from_numpy(input_images).permute(0, 3, 1, 2).contiguous()
+                )
+                input_images = F.resize(
+                    input_images, (new_height, new_width), InterpolationMode.BILINEAR
+                )
+                input_images = F.crop(input_images, y1, x1, dst_height, dst_width)
+            except (RuntimeError, FileNotFoundError):
+                print(
+                    f"Warning: Could not read video at {data['video_path']}. Creating blank frames."
+                )
+                # Create blank frames if video doesn't exist
+                input_images = torch.zeros((num_frames, 3, dst_height, dst_width))
 
-        # read smpl poses
-        try:
-            smpl_poses = np.array(
-                [
-                    pose[0][0].cpu().numpy()
-                    for pose in data["pose"]["joints3d_nonparam"][: num_frames * 2]
-                ]
-            )
-            poses = smpl_poses[sample_indexes]
+            # read reference character image
+            if ref_image_path != "":
+                if os.path.isdir(ref_image_path):
+                    print(
+                        f"Error: '{ref_image_path}' is a directory, not an image file."
+                    )
+                    print(
+                        f"Please specify a specific image file, e.g., --ref_image_path {ref_image_path}/human.png"
+                    )
+                    sys.exit(1)
+                elif not os.path.exists(ref_image_path):
+                    print(
+                        f"Error: Reference image file '{ref_image_path}' does not exist."
+                    )
+                    sys.exit(1)
+                ref_image = Image.open(ref_image_path).convert("RGB")
+                ref_image = (
+                    torch.from_numpy(np.array(ref_image)).permute(2, 0, 1).contiguous()
+                )
+                ref_images = torch.stack([ref_image.clone() for _ in range(num_frames)])
+                ref_images = F.resize(
+                    ref_images, (new_height, new_width), InterpolationMode.BILINEAR
+                )
+                ref_images = F.crop(ref_images, y1, x1, dst_height, dst_width)
+            else:
+                ref_images = copy.deepcopy(input_images)
+                frame0 = input_images[0]
+                ref_images[:, :, :, :] = frame0
 
-        except IndexError:
-            smpl_poses = np.array(
-                [
-                    pose[0][0].cpu().numpy()
-                    for pose in data["pose"]["joints3d_nonparam"][:-1]
-                ]
-            )
-            poses = smpl_poses[sample_indexes]
+            # read smpl poses
+            try:
+                smpl_poses = np.array(
+                    [
+                        pose[0][0].cpu().numpy()
+                        for pose in data["pose"]["joints3d_nonparam"][: num_frames * 2]
+                    ]
+                )
+                poses = smpl_poses[sample_indexes]
 
-        norm_poses = torch.tensor((poses - global_mean) / global_std)
+            except IndexError:
+                smpl_poses = np.array(
+                    [
+                        pose[0][0].cpu().numpy()
+                        for pose in data["pose"]["joints3d_nonparam"][:-1]
+                    ]
+                )
+                poses = smpl_poses[sample_indexes]
 
-        # draw control/recon images
-        height, width = data["video_height"], data["video_width"]
-        offset = [height, width, 0]
-        pose_images_before = get_pose_images(copy.deepcopy(poses), offset)
-        pose_images_before = [
-            image.resize((new_width, new_height)).crop(
-                (x1, y1, x1 + dst_width, y1 + dst_height)
-            )
-            for image in pose_images_before
-        ]
-        input_smpl_joints = norm_poses.unsqueeze(0).to(device)
-        motion_tokens, vq_loss = vqvae(input_smpl_joints, return_vq=True)
-        print(
-            f"vq loss: {vq_loss}"
-        )  # a vq loss greater than 0.1 may indicate poor generation quality
-        output_motion, _ = vqvae(input_smpl_joints)
-        # pose_images_after = get_pose_images(output_motion[0].cpu().detach() * (pose_max - pose_min + 1e-6) + pose_min, offset)
-        pose_images_after = get_pose_images(
-            output_motion[0].cpu().detach() * global_std + global_mean, offset
-        )
-        pose_images_after = [
-            image.resize((new_width, new_height)).crop(
-                (x1, y1, x1 + dst_width, y1 + dst_height)
-            )
-            for image in pose_images_after
-        ]
+            norm_poses = torch.tensor((poses - global_mean) / global_std)
 
-        # normalize images
-        input_images = input_images / 255.0
-        ref_images = ref_images / 255.0
-        input_images = normalize(input_images)
-        ref_images = normalize(ref_images)
-
-        # start inference
-        output_images = pipe(
-            height=dst_height,
-            width=dst_width,
-            num_frames=num_frames,
-            num_inference_steps=50,
-            guidance_scale=guidance_scale,
-            seed=6666,
-            ref_images=ref_images,
-            motion_embeds=motion_tokens,
-            joint_mean=global_mean,
-            joint_std=global_std,
-        ).frames[0]
-
-        # save result
-        ref_name = (
-            os.path.basename(ref_image_path).split(".png")[0]
-            if ref_image_path
-            else "fisrt_frame"
-        )
-        save_path = f"{output_dir}/{index}_{ref_name}_{os.path.basename(data['video_path']).replace('.mp4', '')}_guidance_{guidance_scale}.mp4"
-        vis_images = []
-        for k in range(len(pose_images_before)):
-            vis_image = [
-                to_pil(((ref_images[k] + 1) * 127.5).clamp(0, 255).to(torch.uint8)),
-                to_pil(((input_images[k] + 1) * 127.5).clamp(0, 255).to(torch.uint8)),
-                pose_images_before[k],
-                pose_images_after[k],
-                output_images[k],
+            # draw control/recon images
+            height, width = data["video_height"], data["video_width"]
+            offset = [height, width, 0]
+            pose_images_before = get_pose_images(copy.deepcopy(poses), offset)
+            pose_images_before = [
+                image.resize((new_width, new_height)).crop(
+                    (x1, y1, x1 + dst_width, y1 + dst_height)
+                )
+                for image in pose_images_before
             ]
-            vis_image = concat_images_grid(vis_image, cols=len(vis_image), pad=2)
-            vis_images.append(vis_image)
-        imageio.mimsave(save_path, vis_images, fps=20)
-        print(f"save data to {save_path}")
+            input_smpl_joints = norm_poses.unsqueeze(0).to(device)
+            motion_tokens, vq_loss = vqvae(input_smpl_joints, return_vq=True)
+            print(
+                f"vq loss: {vq_loss}"
+            )  # a vq loss greater than 0.1 may indicate poor generation quality
+            output_motion, _ = vqvae(input_smpl_joints)
+            # pose_images_after = get_pose_images(output_motion[0].cpu().detach() * (pose_max - pose_min + 1e-6) + pose_min, offset)
+            pose_images_after = get_pose_images(
+                output_motion[0].cpu().detach() * global_std + global_mean, offset
+            )
+            pose_images_after = [
+                image.resize((new_width, new_height)).crop(
+                    (x1, y1, x1 + dst_width, y1 + dst_height)
+                )
+                for image in pose_images_after
+            ]
+
+            # normalize images
+            input_images = input_images / 255.0
+            ref_images = ref_images / 255.0
+            input_images = normalize(input_images)
+            ref_images = normalize(ref_images)
+
+            # start inference
+            output_images = pipe(
+                height=dst_height,
+                width=dst_width,
+                num_frames=num_frames,
+                num_inference_steps=50,
+                guidance_scale=guidance_scale,
+                seed=6666,
+                ref_images=ref_images,
+                motion_embeds=motion_tokens,
+                joint_mean=global_mean,
+                joint_std=global_std,
+            ).frames[0]
+
+            # save result
+            ref_name = (
+                os.path.basename(ref_image_path).split(".png")[0]
+                if ref_image_path
+                else "fisrt_frame"
+            )
+            save_path = f"{output_dir}/{index}_{ref_name}_{os.path.basename(data['video_path']).replace('.mp4', '')}_guidance_{guidance_scale}.mp4"
+            vis_images = []
+            for k in range(len(pose_images_before)):
+                vis_image = [
+                    to_pil(((ref_images[k] + 1) * 127.5).clamp(0, 255).to(torch.uint8)),
+                    to_pil(
+                        ((input_images[k] + 1) * 127.5).clamp(0, 255).to(torch.uint8)
+                    ),
+                    pose_images_before[k],
+                    pose_images_after[k],
+                    output_images[k],
+                ]
+                vis_image = concat_images_grid(vis_image, cols=len(vis_image), pad=2)
+                vis_images.append(vis_image)
+            imageio.mimsave(save_path, vis_images, fps=20)
+            print(f"save data to {save_path}")
 
 
 def main():
@@ -325,9 +339,9 @@ def main():
         help="path to the reference character image",
     )
     parser.add_argument(
-        "--motion-data-path",
-        "--motion_data_path",
-        dest="motion_data_path",
+        "--motion-data-dir",
+        "--motion_data_dir",
+        dest="motion_data_dir",
         type=str,
         default="data/sampled_data.pkl",
         required=False,
@@ -346,7 +360,7 @@ def main():
     args = parser.parse_args()
     inference(
         device="cuda:0",
-        motion_data_path=args.motion_data_path,
+        motion_data_dir=args.motion_data_dir,
         ref_image_path=args.ref_image_path,
         output_dir=args.output_dir,
     )
